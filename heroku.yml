@@ -1,2 +1,2 @@
 run:
-  worker: python milkbot.py
+  worker: python discplomacy.py

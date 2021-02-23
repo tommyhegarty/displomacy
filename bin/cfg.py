@@ -1,5 +1,3 @@
-token = "Nzg0MjUzNDI0OTI0ODg1MDE0.X8mm6w.VlJIXxeztgYgl49vMa1_8zu5nq0"
+token = "6ec4424bed41e5fc01c62e9bcde9db18f261f8595aeb20a616a9e92277ae2af2"
 # NEVER DO THIS!!!! THIS IS TERRIBLE CODING!!!!
 # I AM JUST LAZY!!!
-lvmaf_manchat = '644628500354957312'
-stonks_key = 'ZPACg8eFZOf5UpqqXNkHiLOm_uKLBAOu'
