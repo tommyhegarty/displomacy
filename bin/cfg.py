@@ -1,0 +1,5 @@
+token = "Nzg0MjUzNDI0OTI0ODg1MDE0.X8mm6w.VlJIXxeztgYgl49vMa1_8zu5nq0"
+# NEVER DO THIS!!!! THIS IS TERRIBLE CODING!!!!
+# I AM JUST LAZY!!!
+lvmaf_manchat = '644628500354957312'
+stonks_key = 'ZPACg8eFZOf5UpqqXNkHiLOm_uKLBAOu'
