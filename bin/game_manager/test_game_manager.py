@@ -1,16 +1,28 @@
 import move_adjudicator
-import unittest
+import process_turn
 
-class TestMoveAdjudicator(unittest.TestCase):
+def new_order(command,new,conflict,target,unit_type,owner):
+    to_return={
+        "command":command,
+        "new":new,
+        "conflict":conflict,
+        "target":target,
+        "unit_type":unit_type,
+        "owner":owner
+    }
+    return to_return
 
-    def test_adjacent_move(self):
-        self.assertEqual(move_adjudicator.valid_move("A","KIE","HOL"),"VALID","Failed to mark move as valid")
-    def test_fleet_invalid(self):
-        self.assertEqual(move_adjudicator.valid_move("F","BEL","RUH"),"INVALID","Failed to detect fleet move to landlock")
-    def test_army_invalid(self):
-        self.assertEqual(move_adjudicator.valid_move("A","HOL","NTH"),"INVALID","Failed to detect army move to sea")
-    def test_convoy_possible(self):
-        self.assertEqual(move_adjudicator.valid_move("A","HOL","LON"),"CONVOY","Failed to detect possibility of convoy")
+def run_turn_test():
+    orders=[
+        new_order("MOVE","BUD","RUM","","A","TUR"),
+        new_order("SUPPORT","SER","BUD","RUM","A","TUR"),
+        new_order("MOVE","VIE","BUD","","A","RUS"),
+        new_order("MOVE","GAL","WAR","","A","RUS"),
+        new_order("MOVE","GAL","VIE","","A","AUS")
+    ]
+    results=process_turn.execute_orders(orders)
+    print(f"Successful orders : {results[0]}")
+    print(f"Retreat required : {results[1]}")
 
 if __name__ == '__main__':
-    unittest.main()
+    run_turn_test()
