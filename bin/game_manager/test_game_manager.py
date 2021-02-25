@@ -29,7 +29,10 @@ def run_turn_test():
 
 def start_game_test():
     players=["tommy","no","no1","no3","no67","sajd","siahdoia"]
-    game_master.new_game(players, "first game ever", "12 hours")
+    try:
+        game_master.new_game(players, "first game ever", "12 hours")
+    except NameError:
+        print("The name already exists, so let's get it and delete it.")
     print(game_master.get_game("first game ever"))
     game_master.end_game("first game ever")
 
