@@ -1,3 +1,3 @@
-token = "6ec4424bed41e5fc01c62e9bcde9db18f261f8595aeb20a616a9e92277ae2af2"
+token = "ODEzODc1Nzk3NzEzODc5MTAw.YDVq5w.vnrfvkvtksYRK8AjUcHpXgoJMCY"
 # NEVER DO THIS!!!! THIS IS TERRIBLE CODING!!!!
 # I AM JUST LAZY!!!

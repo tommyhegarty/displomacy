@@ -1,6 +1,6 @@
 import adjudicate_moves
 import process_turn
-import game_cfgs
+import vars
 import json
 import random
 import uuid
@@ -66,7 +66,7 @@ def assign_players(players):
 def new_game(players, game_name, turn_duration):
     connection = psycopg2.connect(DATABASE_URL)
     db = connection.cursor()
-    game_template=game_cfgs.template
+    game_template=vars.template
     game_template["currently_playing"]=assign_players(players)
     game_template["name"]=game_name
     game_template["turn_duration"]=turn_duration

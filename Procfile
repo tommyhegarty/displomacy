@@ -1,1 +1,1 @@
-worker: python bin/game_manager/test_game_manager.py startgame
+worker: python bin/discplomacy.py
