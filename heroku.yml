@@ -1,2 +1,2 @@
 run:
-  worker: python discplomacy.py
+  worker: python game_manager/test_game_manager.py startgame

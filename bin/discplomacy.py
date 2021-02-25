@@ -1,4 +1,4 @@
-# main file for the milkbot
+# main file for the discplomacy bot
 
 import os
 import discord
