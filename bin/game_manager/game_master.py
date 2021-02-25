@@ -69,5 +69,6 @@ def new_game(players, game_name, turn_duration):
 
     query='INSERT INTO gamestates (name, games) VALUES (%s,%s);'
     to_insert=json.dumps(game_template)
+    print(to_insert)
     data=(game_name, to_insert,)
     db.execute(query, data)
