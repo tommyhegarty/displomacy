@@ -61,9 +61,9 @@ def new_game(players, game_name, turn_duration):
     game_template["turn_duration"]=turn_duration
 
     reject_duplicates=db.execute("""
-    SELECT * FROM gamestates WHERE name = %s;
+    SELECT * FROM gamestates WHERE name = (%s);
     """,
-    (game_name))
+    (game_name,))
 
     if (reject_duplicates != None):
         raise NameError("Name is already in use!")
@@ -72,4 +72,4 @@ def new_game(players, game_name, turn_duration):
     db.execute("""
     INSERT INTO gamestates (name, games) VALUES (%s, %s);
     """,
-    (game_name, to_insert))
+    (game_name, to_insert,))
