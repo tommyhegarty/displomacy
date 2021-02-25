@@ -2,7 +2,7 @@
     "year":"1901",
     "season":"spring",
     "name":"sample",
-    "uuid":"00000001",
+    "turn_duration":"12 hours",
     "currently_playing":{
         "AUS":"player1",
         "ENG":"player2",
