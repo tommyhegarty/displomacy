@@ -3,23 +3,25 @@
 import os
 import discord
 import cfg
+import asyncio
 from datetime import datetime
+from discord.ext import commands
 
 TOKEN=cfg.token
-client = discord.Client()
+prefix="?"
+bot=commands.Bot(command_prefix=prefix)
 
 milking={}
 
-@client.event
+@bot.event
 async def on_ready():
-    print(f'{client.user} has connected to Discord!')
+    print(f'{bot.user} has connected to Discord!')
 
-@client.event
-async def on_message(message):
-    print(message)
+@bot.command()
+async def newgame(ctx):
+    '''
+    Command that starts initiating a game in your Discord server!
+    '''
+    print(ctx.message.content)
 
-@client.event
-async def on_raw_reaction_add(payload):
-    print(payload)
-
-client.run(TOKEN)
+bot.run(TOKEN)
