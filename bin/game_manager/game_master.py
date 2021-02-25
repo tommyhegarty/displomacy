@@ -6,6 +6,7 @@ import random
 import uuid
 import os
 import psycopg2
+from psycopg2.extras import Json
 
 DATABASE_URL = os.environ['DATABASE_URL']
 connection = psycopg2.connect(DATABASE_URL, sslmode="require")
@@ -68,5 +69,5 @@ def new_game(players, game_name, turn_duration):
         raise NameError("Name is already in use!")
 
     query='INSERT INTO gamestate (name, games) VALUES (%s,%s);'
-    data=(game_name, game_template,)
+    data=(game_name, Json(game_template),)
     db.execute(query, data)
