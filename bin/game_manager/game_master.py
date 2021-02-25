@@ -65,6 +65,7 @@ def new_game(players, game_name, turn_duration):
     """,
     [game_name])
 
+    print(reject_duplicates)
     if (reject_duplicates != None):
         raise NameError("Name is already in use!")
 
