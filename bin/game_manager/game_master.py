@@ -9,7 +9,8 @@ import psycopg2
 from psycopg2.extras import Json
 
 DATABASE_URL = os.environ['DATABASE_URL']
-connection = psycopg2.connect(DATABASE_URL, sslmode="require")
+print(DATABASE_URL)
+connection = psycopg2.connect(DATABASE_URL)
 
 COUNTRIES=[
     "AUS","ENG","FRA","GER","ITA","RUS","TUR"
@@ -19,7 +20,8 @@ def get_game(game_name):
     db = connection.cursor()
     query='SELECT * FROM gamestates WHERE name = %s;'
     data=(game_name,)
-    game_doc=db.execute(query,data)
+    db.execute(query,data)
+    game_doc=db.fetchall()
 
     if (game_doc == None):
         raise NameError("Failed to find a game with that name")
@@ -30,7 +32,8 @@ def end_game(game_name):
     db = connection.cursor()
     query='SELECT * FROM gamestates WHERE name = %s;'
     data=(game_name,)
-    game_doc=db.execute(query,data)
+    db.execute(query,data)
+    game_doc=db.fetchall()
 
     if (game_doc == None):
         raise NameError("Failed to find a game with that name")
@@ -60,16 +63,17 @@ def new_game(players, game_name, turn_duration):
     game_template["name"]=game_name
     game_template["turn_duration"]=turn_duration
 
-    reject_duplicates=db.execute("""
+    db.execute("""
     SELECT * FROM gamestates name WHERE name = (%s);
     """,
     [game_name])
+    reject_duplicates=db.fetchall()
 
-    print(reject_duplicates)
     if (reject_duplicates != None):
         raise NameError("Name is already in use!")
 
     to_insert=json.dumps(game_template)
+    print(to_insert)
     db.execute("""
     INSERT INTO gamestates (name, games) VALUES (%s, %s);
     """,
