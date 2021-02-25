@@ -72,4 +72,4 @@ def new_game(players, game_name, turn_duration):
     db.execute("""
     INSERT INTO gamestates (name, games) VALUES (%s, %s);
     """,
-    [game_name, to_insert,])
+    [game_name, to_insert])
