@@ -67,4 +67,6 @@ def new_game(players, game_name, turn_duration):
     if (reject_duplicates != None):
         raise NameError("Name is already in use!")
 
-    db.insert(game_template)
+    query='INSERT INTO gamestate (name, games) VALUES (%s,%s);'
+    data=(game_name, game_template,)
+    db.execute(query, data)
