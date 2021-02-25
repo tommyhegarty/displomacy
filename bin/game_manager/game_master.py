@@ -9,7 +9,6 @@ import psycopg2
 from psycopg2.extras import Json
 
 DATABASE_URL = os.environ['DATABASE_URL']
-print(DATABASE_URL)
 connection = psycopg2.connect(DATABASE_URL)
 
 COUNTRIES=[
@@ -18,29 +17,32 @@ COUNTRIES=[
 
 def get_game(game_name):
     db = connection.cursor()
-    query='SELECT * FROM gamestates WHERE name = %s;'
-    data=(game_name,)
-    db.execute(query,data)
+    db.execute("""
+    SELECT * FROM gamestates name WHERE name = (%s);
+    """,
+    [game_name])
     game_doc=db.fetchall()
 
-    if (game_doc == None):
+    if (game_doc == []):
         raise NameError("Failed to find a game with that name")
     else:
         return game_doc
 
 def end_game(game_name):
     db = connection.cursor()
-    query='SELECT * FROM gamestates WHERE name = %s;'
-    data=(game_name,)
-    db.execute(query,data)
+    db.execute("""
+    SELECT * FROM gamestates name WHERE name = (%s);
+    """,
+    [game_name])
     game_doc=db.fetchall()
 
-    if (game_doc == None):
+    if (game_doc == []):
         raise NameError("Failed to find a game with that name")
     else:
-        query='DELETE FROM gamestates WHERE name =  %s;'
-        data=(game_name,)
-        game_doc=db.execute(query,data)
+        db.execute("""
+        DELETE FROM gamestates WHERE name = %s;
+        """,
+        [game_name])
 
 def assign_players(players):
     shuffled=COUNTRIES.copy()
