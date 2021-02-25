@@ -30,8 +30,8 @@ def run_turn_test():
 def start_game_test():
     players=["tommy","no","no1","no3","no67","sajd","siahdoia"]
     game_master.new_game(players, "first game ever", "12 hours")
-    print(game_master.get_game("first game ever"))
-    game_master.end_game("first game ever")
+    #print(game_master.get_game("first game ever"))
+    #game_master.end_game("first game ever")
 
 if __name__ == '__main__':
     command = sys.argv[1]
