@@ -61,7 +61,7 @@ def new_game(players, game_name, turn_duration):
     game_template["turn_duration"]=turn_duration
 
     reject_duplicates=db.execute("""
-    SELECT * FROM gamestates WHERE name = (%s);
+    SELECT * FROM gamestates name WHERE name = (%s);
     """,
     [game_name])
 
