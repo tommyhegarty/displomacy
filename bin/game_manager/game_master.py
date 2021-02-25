@@ -16,7 +16,10 @@ COUNTRIES=[
 
 def get_game(game_name):
     db = connection.cursor()
-    game_doc= db.execute(f'SELECT * FROM gamestates WHERE name == "{game_name}"')
+    query='SELECT * FROM gamestates WHERE name = %s;'
+    data=(game_name,)
+    game_doc=db.execute(query,data)
+
     if (game_doc == ''):
         raise NameError("Failed to find a game with that name")
     else:
@@ -24,11 +27,16 @@ def get_game(game_name):
 
 def end_game(game_name):
     db = connection.cursor()
-    game_doc=db.execute(f'SELECT * FROM gamestates WHERE name = "{game_name}"')
+    query='SELECT * FROM gamestates WHERE name = %s;'
+    data=(game_name,)
+    game_doc=db.execute(query,data)
+
     if (game_doc == ''):
         raise NameError("Failed to find a game with that name")
     else:
-        db.execute(f'DELETE FROM gamestates WHERE name = "{game_name}"')
+        query='DELETE FROM gamestates WHERE name =  %s;'
+        data=(game_name,)
+        game_doc=db.execute(query,data)
 
 def assign_players(players):
     shuffled=COUNTRIES.copy()
@@ -51,7 +59,10 @@ def new_game(players, game_name, turn_duration):
     game_template["name"]=game_name
     game_template["turn_duration"]=turn_duration
 
-    reject_duplicates=db.execute(f'SELECT * FROM gamestates WHERE name = "{game_name}"')
+    query='SELECT * FROM gamestates WHERE name = %s;'
+    data=(game_name,)
+    reject_duplicates=db.execute(query,data)
+
     print(reject_duplicates)
     if (reject_duplicates != ''):
         raise NameError("Name is already in use!")
