@@ -1,4 +1,5 @@
 import move_adjudicator
+import game_cfgs
 
 # could we make each order a dict?
 # {

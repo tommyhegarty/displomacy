@@ -1,7 +1,7 @@
 import json
+import game_cfgs
 
-with open("mapgraph.json","r") as file:
-    mapgraph = json.load(file)
+mapgraph=game_cfgs.map
 adjacency=mapgraph["adjacency"]
 
 def is_adjacent(ter1, ter2):

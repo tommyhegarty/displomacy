@@ -1,5 +1,6 @@
 import move_adjudicator
 import process_turn
+import game_cfgs
 import json
 import random
 import uuid
@@ -42,8 +43,7 @@ def assign_players(players):
     return to_return
 
 def new_game(players, turn_duration, game_name):
-    with open('gamestate.json') as f:
-        game_template = json.load(f)
+    game_template=game_cfgs.template
     game_template["currently_playing"]=assign_players(players)
     game_template["name"]=game_name
     game_template["turn_duration"]=turn_duration
