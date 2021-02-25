@@ -60,15 +60,16 @@ def new_game(players, game_name, turn_duration):
     game_template["name"]=game_name
     game_template["turn_duration"]=turn_duration
 
-    query='SELECT * FROM gamestates WHERE name = %s;'
-    data=(game_name,)
-    reject_duplicates=db.execute(query,data)
+    reject_duplicates=db.execute("""
+    SELECT * FROM gamestates WHERE name = %s;
+    """,
+    (game_name))
 
     if (reject_duplicates != None):
         raise NameError("Name is already in use!")
 
-    query='INSERT INTO gamestates (name, games) VALUES (%s, %s);'
     to_insert=json.dumps(game_template)
-    print(to_insert)
-    data=(game_name, to_insert)
-    db.execute(query, data)
+    db.execute("""
+    INSERT INTO gamestates (name, games) VALUES (%s, %s);
+    """,
+    (game_name, to_insert))
