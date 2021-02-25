@@ -77,11 +77,13 @@ def new_game(players, game_name, turn_duration):
     [game_name])
     reject_duplicates=db.fetchall()
 
-    if (reject_duplicates != None):
+    if (reject_duplicates != []):
         raise NameError("Name is already in use!")
 
     to_insert=json.dumps(game_template)
+
     print(to_insert)
+    
     db.execute("""
     INSERT INTO gamestates (name, games) VALUES (%s, %s);
     """,
