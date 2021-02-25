@@ -25,7 +25,7 @@ async def newgame(ctx):
     '''
     print(ctx.message.content)
     # lets test concurrency with wait
-    start_waiting()
+    await start_waiting()
     
 
 bot.run(TOKEN)
