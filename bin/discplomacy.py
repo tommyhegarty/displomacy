@@ -16,11 +16,10 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    print("Received message: message")
+    print(message)
 
 @client.event
-async def on_raw_reaction_add(reaction, user):
-    message = reaction.message
-    print(message)
+async def on_raw_reaction_add(payload):
+    print(payload)
 
 client.run(TOKEN)
