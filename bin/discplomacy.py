@@ -6,6 +6,7 @@ import cfg
 import asyncio
 from datetime import datetime
 from discord.ext import commands
+from chat_interface.start_game import start_waiting
 
 TOKEN=cfg.token
 prefix="?"
@@ -23,5 +24,8 @@ async def newgame(ctx):
     Command that starts initiating a game in your Discord server!
     '''
     print(ctx.message.content)
+    # lets test concurrency with wait
+    start_waiting()
+    
 
 bot.run(TOKEN)
