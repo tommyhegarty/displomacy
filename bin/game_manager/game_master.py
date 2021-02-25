@@ -9,13 +9,13 @@ import psycopg2
 from psycopg2.extras import Json
 
 DATABASE_URL = os.environ['DATABASE_URL']
-connection = psycopg2.connect(DATABASE_URL)
 
 COUNTRIES=[
     "AUS","ENG","FRA","GER","ITA","RUS","TUR"
 ]
 
 def get_game(game_name):
+    connection = psycopg2.connect(DATABASE_URL)
     db = connection.cursor()
     db.execute("""
     SELECT * FROM gamestates name WHERE name = (%s);
@@ -27,8 +27,11 @@ def get_game(game_name):
         raise NameError("Failed to find a game with that name")
     else:
         return game_doc
+    
+    connection.close()
 
 def end_game(game_name):
+    connection = psycopg2.connect(DATABASE_URL)
     db = connection.cursor()
     db.execute("""
     SELECT * FROM gamestates name WHERE name = (%s);
@@ -43,6 +46,8 @@ def end_game(game_name):
         DELETE FROM gamestates WHERE name = %s;
         """,
         [game_name])
+    connection.commit()
+    connection.close()
 
 def assign_players(players):
     shuffled=COUNTRIES.copy()
@@ -59,6 +64,7 @@ def assign_players(players):
     return to_return
 
 def new_game(players, game_name, turn_duration):
+    connection = psycopg2.connect(DATABASE_URL)
     db = connection.cursor()
     game_template=game_cfgs.template
     game_template["currently_playing"]=assign_players(players)
@@ -80,3 +86,5 @@ def new_game(players, game_name, turn_duration):
     INSERT INTO gamestates (name, games) VALUES (%s, %s);
     """,
     [game_name, to_insert])
+    connection.commit()
+    connection.close()
