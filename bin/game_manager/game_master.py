@@ -20,7 +20,7 @@ def get_game(game_name):
     data=(game_name,)
     game_doc=db.execute(query,data)
 
-    if (game_doc == ''):
+    if (game_doc == None):
         raise NameError("Failed to find a game with that name")
     else:
         return game_doc
@@ -31,7 +31,7 @@ def end_game(game_name):
     data=(game_name,)
     game_doc=db.execute(query,data)
 
-    if (game_doc == ''):
+    if (game_doc == None):
         raise NameError("Failed to find a game with that name")
     else:
         query='DELETE FROM gamestates WHERE name =  %s;'
@@ -64,7 +64,7 @@ def new_game(players, game_name, turn_duration):
     reject_duplicates=db.execute(query,data)
 
     print(reject_duplicates)
-    if (reject_duplicates != ''):
+    if (reject_duplicates != None):
         raise NameError("Name is already in use!")
 
     db.insert(game_template)
