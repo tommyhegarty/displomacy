@@ -1,6 +1,6 @@
-import move_adjudicator
+import adjudicate_moves
 import process_turn
-import game_master
+import manage_games
 import sys
 import os
 
@@ -33,8 +33,8 @@ def start_game_test():
         game_master.new_game(players, "first game ever", "12 hours")
     except NameError:
         print("The name already exists, so let's get it and delete it.")
-    print(game_master.get_game("first game ever"))
-    game_master.end_game("first game ever")
+    print(manage_games.get_game("first game ever"))
+    manage_games.end_game("first game ever")
 
 if __name__ == '__main__':
     command = sys.argv[1]

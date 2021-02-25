@@ -1,5 +1,5 @@
-import move_adjudicator
-import game_cfgs
+import adjudicate_moves
+import vars
 
 # could we make each order a dict?
 # {
@@ -93,7 +93,7 @@ def execute_convoy(convoy_orders, move_order):
         found_move=False
         for checking_adj in convoy_orders:
             fleet_location = checking_adj["new"]
-            if (move_adjudicator.is_adjacent(current_location,fleet_location)):
+            if (adjudicate_moves.is_adjacent(current_location,fleet_location)):
                 next_step=checking_adj
                 found_move=True
                 break
@@ -113,7 +113,7 @@ def execute_orders(list_of_orders):
         command = order["command"]
         current_el=order["new"]
 
-        validity=move_adjudicator.valid_order(order)
+        validity=adjudicate_moves.valid_order(order)
         array_switcher={
             "HOLD":holds,
             "MOVE":moves,

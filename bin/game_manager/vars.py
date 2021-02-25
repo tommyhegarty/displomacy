@@ -48,9 +48,27 @@ template={
             "armies":["CON","SMY"],
             "fleets":["ANK"]
         }
+    },
+    "last_moves":{
+        "AUS":[],
+        "ENG":[],
+        "FRA":[],
+        "GER":[],
+        "ITA":[],
+        "RUS":[],
+        "TUR":[]
+    },
+    "next_moves":{
+        "AUS":[],
+        "ENG":[],
+        "FRA":[],
+        "GER":[],
+        "ITA":[],
+        "RUS":[],
+        "TUR":[]
     }
 }
-map={
+game_map={
     "LAND":["ALB","ANK","APU","ARM","BEL","BER","BOH","BRE","BUD","BUL","BUR","CLY","CON","DEN","EDI","FIN","GAL","GAS","GRE","HOL","KIE","LON","LVN","LVP","MAR","MOS","MUN","NAF","NAP","NWY","PAR","PIC","PIE","POR","PRU","ROM","RUH","RUM","SER","SEV","SIL","SMY","SPA","STP","SWE","SYR","TRI","TUN","TUS","TYR","UKR","VEN","VIE","WAL","WAR","YOR"],
     "SEA":["ADR","AEG","BAL","BLA","BOT","EAS","ENG","HEL","ION","IRI","LYO","MAO","NAO","NTH","NWG","SKA","TYS","WES"],
     "LANDLOCKED":["BOH","BUD","BUR","GAL","MOS","MUN","PAR","RUH","SER","SIL","TYR","UKR","VIE","WAR"],

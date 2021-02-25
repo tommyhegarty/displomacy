@@ -1,4 +1,4 @@
-import move_adjudicator
+import adjudicate_moves
 import process_turn
 import game_cfgs
 import json
