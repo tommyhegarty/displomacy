@@ -1,7 +1,7 @@
 import json
-import game_cfgs
+import game_vars
 
-mapgraph=game_cfgs.game_map
+mapgraph=game_vars.game_map
 adjacency=mapgraph["adjacency"]
 
 def is_adjacent(ter1, ter2):
