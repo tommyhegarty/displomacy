@@ -8,13 +8,14 @@ import os
 import psycopg2
 
 DATABASE_URL = os.environ['DATABASE_URL']
-db = psycopg2.connect(DATABASE_URL, sslmode="require")
+connection = psycopg2.connect(DATABASE_URL, sslmode="require")
 
 COUNTRIES=[
     "AUS","ENG","FRA","GER","ITA","RUS","TUR"
 ]
 
 def get_game(game_name):
+    db = connection.cursor()
     game_doc= db.execute(f'SELECT * FROM gamestates WHERE name == "{game_name}"')
     if (game_doc == ''):
         raise NameError("Failed to find a game with that name")
@@ -22,6 +23,7 @@ def get_game(game_name):
         return game_doc
 
 def end_game(game_name):
+    db = connection.cursor()
     game_doc=db.execute(f'SELECT * FROM gamestates WHERE name = "{game_name}"')
     if (game_doc == ''):
         raise NameError("Failed to find a game with that name")
@@ -43,6 +45,7 @@ def assign_players(players):
     return to_return
 
 def new_game(players, game_name, turn_duration):
+    db = connection.cursor()
     game_template=game_cfgs.template
     game_template["currently_playing"]=assign_players(players)
     game_template["name"]=game_name
