@@ -35,7 +35,9 @@ def change_wincon(player, game_name, wincon):
 # returns (dict) that is the game doc of the current game
 def get_gamestate(player, game_name):
     game_doc=gm.get_game(game_name)
-    if (player not in game_doc['currently_playing'].keys()):
+    keys=game_doc['currently_playing'].keys()
+    print(f'Checking {player} against {keys}')
+    if (player not in keys):
         raise NameError('You are not playing in this game')
     player_country=game_doc['currently_playing'][player]
     for country in gv.countries:

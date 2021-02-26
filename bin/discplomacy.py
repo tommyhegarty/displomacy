@@ -23,6 +23,7 @@ async def test(ctx):
     Command to test embed looks
     '''
     print(ctx.message.author)
+    print(ctx.message.author.id)
     await send_private_message(ctx.message.author, 'TEST','This is a test message')
 
 @bot.group()
@@ -60,7 +61,8 @@ async def view(ctx):
     if (len(split) != 3):
         await ctx.message.author.send("Incorrect number of arguments for ?game view, format is '?game view \"game name\"' (the double quotes around game name are required).")
     else:
-        game_doc=run_game.get_gamestate(ctx.message.author, split[2])
+        print(f'Looking at {split[2]} with author {ctx.message.author.id}')
+        game_doc=run_game.get_gamestate(str(ctx.message.author.id), split[2])
         await return_gamedoc(ctx.message.author, split[2], game_doc)
 
 @bot.group()
@@ -89,7 +91,7 @@ async def submit(ctx):
     When submitting army orders, you must submit your whole slate of orders at once. Any order submission overwrites the previous order slate.
     Much like normal diplomacy, any deviation from proper order format will invalidate your order slate.
     '''
-    (all_orders, name)=run_game.parse_orders(ctx.message.content, ctx.message.author)
+    (all_orders, name)=run_game.parse_orders(ctx.message.content, str(ctx.message.author.id))
     if (all_orders):
         (result, result_tuple)=run_game.execute_turn(name)
     else:
@@ -100,13 +102,13 @@ async def see(ctx):
     '''
     Command to see the orders you've submitted for a game. 
     Format is:
-    ?orders view "gamename"
+    ?orders see "gamename"
     '''
     split=shlex.split(ctx.message.content)
     if (len(split) != 3):
         await ctx.message.author.send("Incorrect number of arguments for ?orders view, format is '?orders view \"game name\"' (the double quotes around game name are required).")
     else:
-        orders=run_game.get_orders(split[2],ctx.message.author)
+        orders=run_game.get_orders(split[2],str(ctx.message.author.id))
         await return_orders(ctx.message.author, orders, split[2])
 
 @bot.command()
@@ -125,7 +127,7 @@ async def retreat(ctx):
     if (len(split) != 4):
         await ctx.message.author.send("Incorrect number of arguments for ?supply, format is '?retreat \"game name\" currentlocation retreatlocation' (the double quotes around game name are required).")
     else:
-        (retreat_over,game_doc)=run_game.execute_retreat(ctx.message.author, split[1], split[2], split[3])
+        (retreat_over,game_doc)=run_game.execute_retreat(str(ctx.message.author.id), split[1], split[2], split[3])
         if (retreat_over):
             await notify_retreat_complete(game_doc)
 
@@ -145,7 +147,7 @@ async def supply(ctx):
     if (len(split) != 5):
         await ctx.message.author.send("Incorrect number of arguments for ?supply, format is '?supply \"game name\" add/remove type location' (the double quotes around game name are required).")
     else:
-        (supply_over,game_doc)=run_game.execute_supply(ctx.message.author, split[1], split[2], split[3], split[4])
+        (supply_over,game_doc)=run_game.execute_supply(str(ctx.message.author.id), split[1], split[2], split[3], split[4])
         if (supply_over):
             await notify_supply_complete(game_doc)
 
@@ -165,7 +167,7 @@ async def wincon(ctx):
     if (len(split) != 3):
         await ctx.message.author.send("Incorrect number of arguments for ?wincon, format is '?wincon \"game name\" wincon' (the double quotes around game name are required).")
     else:
-        run_game.change_wincon(ctx.message.author, split[1], split[2])
+        run_game.change_wincon(str(ctx.message.author.id), split[1], split[2])
 
 @bot.command()
 async def surrender(ctx):
@@ -180,7 +182,7 @@ async def surrender(ctx):
     if (len(split) != 2):
         await ctx.message.author.send("Incorrect number of arguments for ?surrender, format is '?surrender \"gamename\"' (the double quotes around game name are required)")
     else:
-        run_game.surrender(ctx.message.author, split[1])
+        run_game.surrender(str(ctx.message.author.id), split[1])
 
 
 
