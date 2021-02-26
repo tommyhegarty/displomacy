@@ -8,6 +8,7 @@ from datetime import datetime
 from discord.ext import commands
 import run_game
 import shlex
+import manage_lobby
 
 TOKEN=cfg.token
 prefix="?"
@@ -24,6 +25,7 @@ async def test(ctx):
     '''
     print(ctx.message.author)
     print(ctx.message.author.id)
+    print(ctx.message.content)
     await send_private_message(ctx.message.author, 'TEST','This is a test message')
 
 @bot.group()
@@ -37,10 +39,25 @@ async def new(ctx):
     '''
     Command that opens a new game lobby. 
     Format is:
-    ?game new 'game name' 'turn duration'
+    ?game new "game name" "turn duration"
     A lobby message will be sent to this channel. Once 7 players have reacted :white_check_mark:, issue the start command in this channel and your game will begin.
+    The 3 valid turn durations are: "10 minutes", "1 hour", "24 hours"
     '''
-
+    split=shlex.split(ctx.message.content)
+    if (len(split) != 4):
+        await ctx.message.channel.send("Incorrect number of arguments for ?game new, format is '?game new \"game name\" \"turn duration\"' (the double quotes around game name are required).")
+    elif(split[3] != "10 minutes" and split[3] != "1 hour" and split[3] != "24 hours"):
+        await ctx.message.channel.send("Invalid turn duration, only valid durations are \"10 minutes\", \"1 hour\" and \"24 hours\".")
+    else:
+        name = split[2]
+        turn_duration=split[3]
+        try:
+            manage_lobby.create_lobby(name, turn_duration, datetime.now())
+            send_message=await send_lobby_start(ctx.message.channel, name)
+            manage_lobby.add_message_id(name, str(send_message.id))
+        except:
+            await ctx.message.channel.send("A lobby of that name already exists.")
+        
 @game.command()
 async def start(ctx):
     '''
@@ -48,6 +65,36 @@ async def start(ctx):
     Format is:
     ?game start 'game name'
     '''
+    split=shlex.split(ctx.message.content)
+    if (len(split) != 3):
+        await ctx.message.channel.send("Incorrect number of arguments for ?game start, format is '?game new \"game name\" (the double quotes around game name are required).")
+    else:
+        try:
+            message_id = manage_lobby.get_message_id(split[2])
+            print(message_id)
+        except:
+            await ctx.message.channel.send("Lobby of that name does not exist.")
+            return
+        msg=await ctx.fetch_message(int(message_id))
+        reactions=msg.reactions
+        players = []
+        for react in reactions:
+            print(react.emoji)
+            if (react.emoji == '✅'):
+                players = await react.users().flatten()
+                print(players)
+                if (len(players) != 7):
+                    await ctx.message.channel.send("Incorrect number of players -- there must be exactly 7.")
+                    return
+        if (players == []):
+            await ctx.message.channel.send("Incorrect number of players -- there must be exactly 7. Make sure you're reacting to lobby message with :white_check_mark:")
+        else:
+            info=manage_lobby.start_game_from_lobby(split[2])
+            name=split[2]
+            turn_duration=info[2]
+            game_doc=run_game.start_game(players, name, turn_duration)
+            await send_game_start(ctx.message.channel, name, game_doc, players)
+        
 
 @game.command()
 async def view(ctx):
@@ -70,7 +117,6 @@ async def orders(ctx):
     '''
     Command to see and submit orders, subcommands are see and submit
     '''
-    print(ctx.message.content)
 
 @orders.command()
 async def submit(ctx):
@@ -197,8 +243,8 @@ async def send_private_message(user,game_name,message):
         color=discord.Color.dark_green()
     )
     embed.set_author(name='Discplomacy')
-    await user.send(embed=embed)
-    print(f'Sending {message} to {user}')
+    sent_message = await user.send(embed=embed)
+    return sent_message
 
 async def notify_new_phase(game_doc):
     print('here is where we notify a new phase')
@@ -251,5 +297,16 @@ async def return_orders_submitted_successfully(player, game):
 
 async def return_gamedoc(player, game, game_doc):
     await send_private_message(player, game, f'The current state of the game is {game_doc}')
+
+async def send_lobby_start(channel, game):
+    message_info=await send_private_message(channel, game, f'Lobby has been started for {game}. React to this message with :white_check_mark: and once 7 people have reacted, issue the \'?game start "{game}\"\' command to begin the game.')
+    return message_info
+
+async def send_game_start(channel, game, game_doc, players):
+    await send_private_message(channel, game, f'{game} has officially started. Every player should receive a private notification giving them their country assignment. From here on, games will be conducted through private messages between each player and the bot.')
+    for player in players:
+        user_key = str(player.id)
+        country = game_doc['currently_playing'][user_key]
+        await send_private_message(player, game, f'You have been assigned {country}')
 
 bot.run(TOKEN)
