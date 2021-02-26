@@ -1,5 +1,5 @@
+import json
 import judge_moves
-
 # could we make each order a dict?
 # {
 #   command
@@ -27,7 +27,7 @@ def execute_cascaded_combat(order, cascaded_loc):
         checking_command = checking_order["command"]
         move_new = checking_order["new"]
         move_conflict = checking_order["conflict"]
-        if (checking_command == "MOVE" and move_new == cascaded_loc):
+        if (checking_command == "MOV" and move_new == cascaded_loc):
             #print(f"The failed order : {order} has encountered a new conflict at {checking_order}")
             total = 0
             # now checking order has to deal with a contesting of 1
@@ -40,7 +40,13 @@ def execute_cascaded_combat(order, cascaded_loc):
                     if (support_loc not in possible_conflicts):
                         total = total + 1
             if (total > 0):
-                retreat_required.append(order)
+                retreat={
+                    'location':cascaded_loc,
+                    'owner':order['owner'],
+                    'attacked_loc':move_conflict,
+                    'unit_type':order['unit_type']
+                }
+                retreat_required.append(retreat)
             else:
                 successful_orders.remove(checking_order)
                 failed_orders.append(checking_order)
@@ -114,10 +120,10 @@ def execute_orders(list_of_orders):
 
         validity=judge_moves.valid_order(order)
         array_switcher={
-            "HOLD":holds,
-            "MOVE":moves,
-            "SUPPORT":supports,
-            "CONVOY":convoys
+            "HOL":holds,
+            "MOV":moves,
+            "SUP":supports,
+            "CON":convoys
         }
         if (validity == "INVALID"):
             break
@@ -183,14 +189,11 @@ def execute_orders(list_of_orders):
         #print(f"Current failed orders are : {failed_orders}")
         order = failed_orders.pop(0)
         command = order["command"]
-        if (command == "HOLD"):
-            retreat_required.append(order)
+        cascaded_loc=""
+        if (command == "MOV"):
+            cascaded_loc=order["conflict"]
         else:
-            cascaded_loc=""
-            if (command == "MOVE"):
-                cascaded_loc=order["conflict"]
-            elif (command == "SUPPORT" or command == "CONVOY"):
-                cascaded_loc=order["new"]
-            execute_cascaded_combat(order, cascaded_loc)
+            cascaded_loc=order["new"]
+        execute_cascaded_combat(order, cascaded_loc)
     
     return (successful_orders, retreat_required)

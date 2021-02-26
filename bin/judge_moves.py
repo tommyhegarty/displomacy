@@ -75,10 +75,10 @@ def valid_convoy(order):
 def valid_order(order):
     command = order["command"]
     switcher = {
-        "HOLD":valid_hold,
-        "MOVE":valid_move,
-        "SUPPORT":valid_support,
-        "CONVOY":valid_convoy
+        "HOL":valid_hold,
+        "MOV":valid_move,
+        "SUP":valid_support,
+        "CON":valid_convoy
     }
     func=switcher.get(command)
     return func(order)

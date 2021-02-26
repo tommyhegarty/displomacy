@@ -1,55 +1,76 @@
 template={
-    "year":"1901",
+    "year":1901,
     "season":"spring",
     "name":"sample",
     "turn_duration":"12 hours",
     "currently_playing":{
-        "AUS":"player1",
-        "ENG":"player2",
-        "FRA":"player3",
-        "GER":"player4",
-        "ITA":"player5",
-        "RUS":"player6",
-        "TUR":"player7"
+        "player1":"AUS",
+        "player2":"ENG",
+        "player3":"FRA",
+        "player4":"GER",
+        "player5":"ITA",
+        "player6":"RUS",
+        "player7":"TUR"
     },
     "state":{
         "AUS":{
+            "original":["VIE","BUD","TRI"],
             "controls":["VIE","BUD","TRI"],
             "armies":["VIE","BUD"],
-            "fleets":["TRI"]
+            "fleets":["TRI"],
+            "wincon":1,
+            "surrendered":False
         },
         "ENG":{
+            "original":["EDI","LVP","LON"],
             "controls":["EDI","LVP","LON"],
             "armies":["LVP"],
-            "fleets":["EDI","LON"]
+            "fleets":["EDI","LON"],
+            "wincon":1,
+            "surrendered":False
         },
         "FRA":{
+            "original":["BRE","PAR","MAR"],
             "controls":["BRE","PAR","MAR"],
             "armies":["PAR","MAR"],
-            "fleets":["BRE"]
+            "fleets":["BRE"],
+            "wincon":1,
+            "surrendered":False
         },
         "GER":{
+            "original":["BER","KIE","MUN"],
             "controls":["BER","KIE","MUN"],
             "armies":["BER","MUN"],
-            "fleets":["KIE"]
+            "fleets":["KIE"],
+            "wincon":1,
+            "surrendered":False
         },
         "ITA":{
+            "original":["VEN","ROM","NAP"],
             "controls":["VEN","ROM","NAP"],
             "armies":["ROM","VEN"],
-            "fleets":["NAP"]
+            "fleets":["NAP"],
+            "wincon":1,
+            "surrendered":False
         },
         "RUS":{
+            "original":["STP","MOS","WAR","SEV"],
             "controls":["STP","MOS","WAR","SEV"],
             "armies":["MOS","WAR"],
-            "fleets":["STPsc","SEV"]
+            "fleets":["STPsc","SEV"],
+            "wincon":1,
+            "surrendered":False
         },
         "TUR":{
+            "original":["CON","ANK","SMY"],
             "controls":["CON","ANK","SMY"],
             "armies":["CON","SMY"],
-            "fleets":["ANK"]
+            "fleets":["ANK"],
+            "wincon":1,
+            "surrendered":False
         }
     },
-    "last_moves":{
+    "last_orders":{
         "AUS":[],
         "ENG":[],
         "FRA":[],
@@ -58,7 +79,7 @@ template={
         "RUS":[],
         "TUR":[]
     },
-    "next_moves":{
+    "next_orders":{
         "AUS":[],
         "ENG":[],
         "FRA":[],
@@ -66,7 +87,9 @@ template={
         "ITA":[],
         "RUS":[],
         "TUR":[]
-    }
+    },
+    "required_retreats":{},
+    "required_supply":{}
 }
 game_map={
     "LAND":["ALB","ANK","APU","ARM","BEL","BER","BOH","BRE","BUD","BUL","BUR","CLY","CON","DEN","EDI","FIN","GAL","GAS","GRE","HOL","KIE","LON","LVN","LVP","MAR","MOS","MUN","NAF","NAP","NWY","PAR","PIC","PIE","POR","PRU","ROM","RUH","RUM","SER","SEV","SIL","SMY","SPA","STP","SWE","SYR","TRI","TUN","TUS","TYR","UKR","VEN","VIE","WAL","WAR","YOR"],
@@ -150,3 +173,6 @@ game_map={
         "WES":["SPA","LYO","TYS","TUN","NAF","MAO"]
     }
 }
+countries=[
+    "AUS","ENG","FRA","GER","ITA","RUS","TUR"
+]
