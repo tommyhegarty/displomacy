@@ -5,12 +5,12 @@
 import random
 import manage_games as gm
 import parse_orders as po
-import send_notifications as sn
 import game_vars as gv
 import process_orders as process_orders
 import manage_players as pm
 import asyncio
 
+# returns nothing
 def surrender(player, game_name):
     game=gm.get_game(game_name)
     if (player not in game['currently_playing'].keys()):
@@ -20,8 +20,10 @@ def surrender(player, game_name):
     game['state'][country]['armies']=[]
     game['state'][country]['fleets']=[]
     game['state'][country]['controls']=[]
+    game['currently_playing'].pop(player)
     gm.update_game(game)
 
+# returns nothing
 def change_wincon(player, game_name, wincon):
     game=gm.get_game(game_name)
     if (player not in game['currently_playing'].keys()):
@@ -30,6 +32,7 @@ def change_wincon(player, game_name, wincon):
     game['state'][country]['wincon']=wincon
     gm.update_game(game)
 
+# returns (dict) that is the game doc of the current game
 def get_gamestate(player, game_name):
     game_doc=gm.get_game(game_name)
     if (player not in game_doc['currently_playing'].keys()):
@@ -41,6 +44,7 @@ def get_gamestate(player, game_name):
             game_doc['next_orders'].pop(country)
     return game_doc
 
+# returns (dict) that is the game template of the new game
 def start_game(players, name, turn_duration):
     game_template=gv.template
     shuffled=gv.countries.copy()
@@ -60,9 +64,10 @@ def start_game(players, name, turn_duration):
     game_template["name"]=name
     game_template["turn_duration"]=turn_duration
 
-    asyncio.run(sn.notify_game_start(game_template))
     gm.new_game(game_template)
+    return game_template
 
+# returns (array, array) that is (winners so far, currently active players)
 def check_wincons(game_doc):
     winner_found=False
     non_surrendered_countries=[]
@@ -77,11 +82,11 @@ def check_wincons(game_doc):
             print(f'Country {country} has won the game.')
             player_position=list(players.values()).index(country)
             player=list(players.keys())[player_position]
-            asyncio.run(sn.notify_game_over([player], players))
             winner_found=True
+            winners=[player]
     
     if(winner_found):
-        return winner_found
+        return (winners,players)
     # no single person has won the game, so check if a draw has been agreed upon
     agreed_draw=True
     for (country, winners) in non_surrendered_countries:
@@ -93,17 +98,17 @@ def check_wincons(game_doc):
             player_position=list(players.values()).index(country)
             player=list(players.keys())[player_position]
             winners.append(player)
-        asyncio.run(sn.notify_game_over(winners, players))
-        winner_found=True
     
-    return winner_found
+    return (winners, players)
 
+# returns list of orders given game name and discord id
 def get_orders(game_name, discord_id):
     game_doc=gm.get_game(game_name)
     country_code=game_doc['currently_playing'][discord_id]
     orders=game_doc['next_orders'][country_code]
     return orders
 
+# returns value of execute turn return
 def parse_orders(order_string, discord_id):
 
     '''
@@ -144,11 +149,17 @@ def parse_orders(order_string, discord_id):
     # now check if every player has orders
     game_doc=gm.get_game(gamename_line)
     if(po.all_orders_submitted(game_doc)):
-        execute_turn(gamename_line)
+        return (True, gamename_line)
+    return (False, gamename_line)
 
+# returns (dict, dict) that is (positive supply (player -> tuple of supp number and game name), negative supply (player -> tuple of supp number and game name))
 def start_supply(game_doc):
     players=game_doc['currently_playing']
     name=game_doc['name']
+
+    reinforcements_doc={}
+    disbandments_doc={}
+
     for country in gv.countries:
         supply=game_doc['state'][country]['controls']
         units=game_doc['state'][country]['armies']+game_doc['state'][country]['fleets']
@@ -158,11 +169,14 @@ def start_supply(game_doc):
         player=list(players.keys())[player_position]
         if (supp_required > 0):
             game_doc['required_supply'][country]=supp_required
-            asyncio.run(sn.notify_reinforcements(player, supp_required, name))
+            reinforcements_doc[player]=(supp_required,name)
         elif (supp_required < 0):
             game_doc['required_supply'][country]=supp_required
-            asyncio.run(sn.notify_disbandment(player, supp_required, name))
-            
+            disbandments_doc[player]=(supp_required,name)
+    
+    return (reinforcements_doc, disbandments_doc)
+
+# returns (boolean, dict) that is (supply completed true/false, game doc state)            
 def execute_supply(player,name, addremove, unit, location):
     # string is formatted as ?supply add/remove type location
 
@@ -224,10 +238,12 @@ def execute_supply(player,name, addremove, unit, location):
     if (game_doc['required_supply'] == 0):
         game_doc['year']=game_doc['year']+1
         game_doc['season']='spring'
-        asyncio.run(sn.notify_supply_complete(game_doc))
+        return (True, game_doc)
     
     gm.update_game(game_doc)
+    return (False, game_doc)
 
+# returns (dict) that is (game_doc after being updated)
 def update_map(orders, season, game_doc):
     for order in orders:
         command = order['command']
@@ -252,8 +268,10 @@ def update_map(orders, season, game_doc):
     game_doc['season']=season
     return game_doc
 
+# returns (dict, dict) that is (retreats required (player -> array of retreats), units destroyed (player -> array of destroyed))
 def retreat_needed(retreats, game_doc):
-    to_send={}
+    retreats_req={}
+    units_destroyed={}
     players = game_doc['currently_playing']
     name=game_doc['name']
 
@@ -278,22 +296,27 @@ def retreat_needed(retreats, game_doc):
             available=[x for x in available if x not in gv.game_map['LANDLOCKED']]
         
         if (available == []):
-            asyncio.run(sn.notify_unit_destroyed(fromloc,player,name))
+            try:
+                units_destroyed[player].append((fromloc, name))
+            except:
+                units_destroyed[player]=[(fromloc,name)]
         else:
             try:
                 game_doc['required_retreats'][country].append((fromloc,available))
-                to_send[player].append(fromloc)
+                retreats_req[player].append(fromloc)
             except:
                 game_doc['required_retreats'][country]=(fromloc,available)
-                to_send[player]=fromloc
+                retreats_req[player]=[fromloc]
 
-    asyncio.run(sn.notify_retreats_required(to_send,name))
+    return (retreats_req, units_destroyed)
 
+# no return
 def end_game(game_doc):
     gm.end_game(game_doc['name'])
     for player in game_doc['currently_playing'].keys():
         pm.end_game(player, game_doc['name'])
 
+# no return
 def execute_retreat(player, name, loc_from, loc_to):
 
     game_doc=gm.get_game(name)
@@ -317,8 +340,13 @@ def execute_retreat(player, name, loc_from, loc_to):
     if (game_doc['required_retreats'][country] == {}):
         game_doc['required_retreats'].pop(country)
             
+    if (game_doc['required_retreats'] == 0):
+        return (True, game_doc)
+    
     gm.update_game(game_doc)
+    return (False, game_doc)
 
+# returns (string, tuple) where (string = result of turn ['RETREAT','SUPPLY','TURN END','GAME END'])
 def execute_turn(game_name):
     game_doc=gm.get_game(game_name)
 
@@ -344,9 +372,13 @@ def execute_turn(game_name):
     gm.update_game(game_doc)
     
     if(retreat_required != []):
-        retreat_needed(retreat_required,game_doc)
+        return ('RETREAT',retreat_needed(retreat_required,game_doc))
     elif (new_season == 'winter'):
-        if (not check_wincons(game_doc)):
-            start_supply(game_doc)
+        (winners, players)=check_wincons(game_doc)
+        if (winners == []):
+            return ('SUPPLY', start_supply(game_doc))
         else:
             end_game(game_doc)
+            return ('GAME END',(winners,players))
+    else:
+        return ('TURN END',[])

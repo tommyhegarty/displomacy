@@ -17,6 +17,14 @@ bot=commands.Bot(command_prefix=prefix)
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
 
+@bot.command(pass_context=True)
+async def test(ctx):
+    '''
+    Command to test embed looks
+    '''
+    print(ctx.message.author)
+    await send_private_message(ctx.message.author, 'TEST','This is a test message')
+
 @bot.group()
 async def game(ctx):
     '''
@@ -50,10 +58,10 @@ async def view(ctx):
     '''
     split=shlex.split(ctx.message.content)
     if (len(split) != 3):
-        ctx.message.author.send("Incorrect number of arguments for ?game view, format is '?game view \"game name\"' (the double quotes around game name are required).")
+        await ctx.message.author.send("Incorrect number of arguments for ?game view, format is '?game view \"game name\"' (the double quotes around game name are required).")
     else:
-        run_game.get_gamestate(ctx.message.author, split[2])
-
+        game_doc=run_game.get_gamestate(ctx.message.author, split[2])
+        await return_gamedoc(ctx.message.author, split[2], game_doc)
 
 @bot.group()
 async def orders(ctx):
@@ -81,11 +89,11 @@ async def submit(ctx):
     When submitting army orders, you must submit your whole slate of orders at once. Any order submission overwrites the previous order slate.
     Much like normal diplomacy, any deviation from proper order format will invalidate your order slate.
     '''
-    try:
-        run_game.parse_orders(ctx.message.content, ctx.message.author)
-        # send success message
-    except Exception:
-        print("Failed to parse orders.")
+    (all_orders, name)=run_game.parse_orders(ctx.message.content, ctx.message.author)
+    if (all_orders):
+        (result, result_tuple)=run_game.execute_turn(name)
+    else:
+        await return_orders_submitted_successfully(ctx.message.author,name)
 
 @orders.command()
 async def see(ctx):
@@ -96,9 +104,10 @@ async def see(ctx):
     '''
     split=shlex.split(ctx.message.content)
     if (len(split) != 3):
-        ctx.message.author.send("Incorrect number of arguments for ?orders view, format is '?orders view \"game name\"' (the double quotes around game name are required).")
+        await ctx.message.author.send("Incorrect number of arguments for ?orders view, format is '?orders view \"game name\"' (the double quotes around game name are required).")
     else:
-        run_game.get_orders(split[2],ctx.message.author)
+        orders=run_game.get_orders(split[2],ctx.message.author)
+        await return_orders(ctx.message.author, orders, split[2])
 
 @bot.command()
 async def retreat(ctx):
@@ -114,9 +123,11 @@ async def retreat(ctx):
     '''
     split=shlex.split(ctx.message.content)
     if (len(split) != 4):
-        ctx.message.author.send("Incorrect number of arguments for ?supply, format is '?retreat \"game name\" currentlocation retreatlocation' (the double quotes around game name are required).")
+        await ctx.message.author.send("Incorrect number of arguments for ?supply, format is '?retreat \"game name\" currentlocation retreatlocation' (the double quotes around game name are required).")
     else:
-        run_game.execute_retreat(ctx.message.author, split[1], split[2], split[3])
+        (retreat_over,game_doc)=run_game.execute_retreat(ctx.message.author, split[1], split[2], split[3])
+        if (retreat_over):
+            await notify_retreat_complete(game_doc)
 
 @bot.command()
 async def supply(ctx):
@@ -132,9 +143,11 @@ async def supply(ctx):
     '''
     split=shlex.split(ctx.message.content)
     if (len(split) != 5):
-        ctx.message.author.send("Incorrect number of arguments for ?supply, format is '?supply \"game name\" add/remove type location' (the double quotes around game name are required).")
+        await ctx.message.author.send("Incorrect number of arguments for ?supply, format is '?supply \"game name\" add/remove type location' (the double quotes around game name are required).")
     else:
-        run_game.execute_supply(ctx.message.author, split[1], split[2], split[3], split[4])
+        (supply_over,game_doc)=run_game.execute_supply(ctx.message.author, split[1], split[2], split[3], split[4])
+        if (supply_over):
+            await notify_supply_complete(game_doc)
 
 
 @bot.command()
@@ -150,7 +163,7 @@ async def wincon(ctx):
     '''
     split=shlex.split(ctx.message.content)
     if (len(split) != 3):
-        ctx.message.author.send("Incorrect number of arguments for ?wincon, format is '?wincon \"game name\" wincon' (the double quotes around game name are required).")
+        await ctx.message.author.send("Incorrect number of arguments for ?wincon, format is '?wincon \"game name\" wincon' (the double quotes around game name are required).")
     else:
         run_game.change_wincon(ctx.message.author, split[1], split[2])
 
@@ -165,17 +178,76 @@ async def surrender(ctx):
     '''
     split=shlex.split(ctx.message.content)
     if (len(split) != 2):
-        ctx.message.author.send("Incorrect number of arguments for ?surrender, format is '?surrender \"gamename\"' (the double quotes around game name are required)")
+        await ctx.message.author.send("Incorrect number of arguments for ?surrender, format is '?surrender \"gamename\"' (the double quotes around game name are required)")
     else:
         run_game.surrender(ctx.message.author, split[1])
 
-async def send_private_message(discord_id,game_name,message):
-    #user = bot.get_user(discord_id)
-    #await user.send(message)
-    print(f'Sending {message} to {discord_id}')
+
 
 @commands.Cog.listener()
 async def on_command_error(self, ctx, error):
     print(f'Handling... {error}')
 
-#bot.run(TOKEN)
+async def send_private_message(user,game_name,message):
+    embed=discord.Embed(
+        title=game_name,
+        description=message,
+        color=discord.Color.dark_green()
+    )
+    embed.set_author(name='Discplomacy')
+    await user.send(embed=embed)
+    print(f'Sending {message} to {user}')
+
+async def notify_new_phase(game_doc):
+    print('here is where we notify a new phase')
+
+async def notify_supply_complete(game_doc):
+    players=game_doc['currently_playing']
+    year=game_doc['year']
+    season=game_doc['season']
+    game=game_doc['name']
+    for player in players.keys():
+        await send_private_message(player,game, f'Winter completed, it is now {season} {year}')
+
+async def notify_retreat_complete(game_doc):
+    players=game_doc['currently_playing']
+    year=game_doc['year']
+    season=game_doc['season']
+    game=game_doc['name']
+    for player in players.keys():
+        await send_private_message(player,game, f'Retreats completed, it is now {season} {year}')
+
+async def notify_reinforcements(player,supply,name):
+    await send_private_message(player,name,f'You can resupply your forces up to {supply}. Use the ?supply add command, remembering that the only valid supply locations are unoccupied supply centers you began the game with.')
+
+async def notify_disbandment(player,supply,name):
+    await send_private_message(player,name,f'You must disband your forces up to {supply}. Use the ?supply remove command.')
+
+async def notify_retreats_required(retreats,name):
+    for player in retreats.keys():
+        locations = retreats[player]
+        send_private_message(player, name,f'The turn has executed and you are forced to retreat from the following locations: {locations}')
+
+async def notify_unit_destroyed(location, player, name):
+    await send_private_message(player,name,f'Your unit at {location} was defeated and had nowhere to retreat, so was destroyed.')
+
+async def notify_game_start(game_doc):
+    players=game_doc['currently_playing']
+    game=game_doc['name']
+    for player in players.keys():
+        country = game_doc['currently_playing'][player]
+        await send_private_message(player, game, f'Your game has started! You have been assigned {country}')
+
+async def notify_game_over(winners,players):
+    print('Game has ended')
+
+async def return_orders(player, orders, game):
+    await send_private_message(player, game, f'Your currently active orders are {orders}')
+
+async def return_orders_submitted_successfully(player, game):
+    await send_private_message(player, game, f'You have successfully submitted your orders.')
+
+async def return_gamedoc(player, game, game_doc):
+    await send_private_message(player, game, f'The current state of the game is {game_doc}')
+
+bot.run(TOKEN)
