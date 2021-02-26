@@ -3,11 +3,11 @@
 #   execute turn & post results
 #   finish game state
 import random
-import manage_games as gm
-import parse_orders as po
-import game_vars as gv
-import process_orders as process_orders
-import manage_players as pm
+from games import manage_games as gm
+from games import parse_orders as po
+from games import game_vars as gv
+from games import process_orders as process_orders
+from players import manage_players as pm
 import asyncio
 
 # returns nothing

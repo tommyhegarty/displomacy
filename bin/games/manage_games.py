@@ -1,4 +1,4 @@
-import game_vars as gv
+from . import game_vars as gv
 import json
 import random
 import uuid

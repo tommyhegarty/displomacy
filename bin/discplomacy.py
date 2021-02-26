@@ -8,7 +8,7 @@ from datetime import datetime
 from discord.ext import commands
 import run_game
 import shlex
-import manage_lobby
+from games import manage_lobby
 
 TOKEN=cfg.token
 prefix="?"

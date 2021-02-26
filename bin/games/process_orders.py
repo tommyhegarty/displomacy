@@ -1,5 +1,5 @@
 import json
-import judge_moves
+from . import judge_moves
 # could we make each order a dict?
 # {
 #   command
