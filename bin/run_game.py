@@ -11,6 +11,25 @@ import process_orders as process_orders
 import manage_players as pm
 import asyncio
 
+def surrender(player, game_name):
+    game=gm.get_game(game_name)
+    if (player not in game['currently_playing'].keys()):
+        raise NameError('You are not playing in this game')
+    country=game['currently_playing'][player]
+    game['state'][country]['surrendered']=True
+    game['state'][country]['armies']=[]
+    game['state'][country]['fleets']=[]
+    game['state'][country]['controls']=[]
+    gm.update_game(game)
+
+def change_wincon(player, game_name, wincon):
+    game=gm.get_game(game_name)
+    if (player not in game['currently_playing'].keys()):
+        raise NameError('You are not playing in this game')
+    country=game['currently_playing'][player]
+    game['state'][country]['wincon']=wincon
+    gm.update_game(game)
+
 def get_gamestate(player, game_name):
     game_doc=gm.get_game(game_name)
     if (player not in game_doc['currently_playing'].keys()):
@@ -144,13 +163,8 @@ def start_supply(game_doc):
             game_doc['required_supply'][country]=supp_required
             asyncio.run(sn.notify_disbandment(player, supp_required, name))
             
-def execute_supply(string,player):
+def execute_supply(player,name, addremove, unit, location):
     # string is formatted as ?supply add/remove type location
-    split=string.split()
-    addremove=split[2]
-    unit=split[3]
-    location=split[4]
-    name=split[1]
 
     game_doc=gm.get_game(name)
     try:
@@ -280,11 +294,7 @@ def end_game(game_doc):
     for player in game_doc['currently_playing'].keys():
         pm.end_game(player, game_doc['name'])
 
-def execute_retreat(string, player):
-    split=string.split()
-    name=split[1]
-    loc_from=split[2]
-    loc_to=split[3]
+def execute_retreat(player, name, loc_from, loc_to):
 
     game_doc=gm.get_game(name)
     country=game_doc['currently_playing'][player]

@@ -7,6 +7,7 @@ import asyncio
 from datetime import datetime
 from discord.ext import commands
 import run_game
+import shlex
 
 TOKEN=cfg.token
 prefix="?"
@@ -44,9 +45,15 @@ async def view(ctx):
     '''
     Command that views the current state of a game lobby. 
     Format is:
-    ?game view 'game name'.
+    ?game view "game name".
     You can only view games you are a player in.
     '''
+    split=shlex.split(ctx.message.content)
+    if (len(split) != 3):
+        ctx.message.author.send("Incorrect number of arguments for ?game view, format is '?game view \"game name\"' (the double quotes around game name are required).")
+    else:
+        run_game.get_gamestate(ctx.message.author, split[2])
+
 
 @bot.group()
 async def orders(ctx):
@@ -85,12 +92,15 @@ async def see(ctx):
     '''
     Command to see the orders you've submitted for a game. 
     Format is:
-    ?orders view gamename
+    ?orders view "gamename"
     '''
-    game_name=ctx.message.content.replace('?orders view ','')
-    run_game.get_orders(game_name,ctx.message.author)
+    split=shlex.split(ctx.message.content)
+    if (len(split) != 3):
+        ctx.message.author.send("Incorrect number of arguments for ?orders view, format is '?orders view \"game name\"' (the double quotes around game name are required).")
+    else:
+        run_game.get_orders(split[2],ctx.message.author)
 
-@orders.command()
+@bot.command()
 async def retreat(ctx):
     '''
     Command to fulfill retreat requirements. 
@@ -102,7 +112,13 @@ async def retreat(ctx):
 
     If the retreat command is not valid, you will be notified immediately.
     '''
+    split=shlex.split(ctx.message.content)
+    if (len(split) != 4):
+        ctx.message.author.send("Incorrect number of arguments for ?supply, format is '?retreat \"game name\" currentlocation retreatlocation' (the double quotes around game name are required).")
+    else:
+        run_game.execute_retreat(ctx.message.author, split[1], split[2], split[3])
 
+@bot.command()
 async def supply(ctx):
     '''
     Command to execute supply, either adding or removing armies.
@@ -114,11 +130,52 @@ async def supply(ctx):
 
     If your supply command is not valid, you will be notified immediately
     '''
+    split=shlex.split(ctx.message.content)
+    if (len(split) != 5):
+        ctx.message.author.send("Incorrect number of arguments for ?supply, format is '?supply \"game name\" add/remove type location' (the double quotes around game name are required).")
+    else:
+        run_game.execute_supply(ctx.message.author, split[1], split[2], split[3], split[4])
 
+
+@bot.command()
+async def wincon(ctx):
+    '''
+    Command to change wincon for a game.
+    1 means winning alone (the default setting), 2 means two way draw, etc up to 6. Format is:
+    ?wincon "gamename" wincon
+
+    example
+    ?wincon "gamename" 3
+    Will set your saved state to indicate that you are willing to draw when only 3 players remain.
+    '''
+    split=shlex.split(ctx.message.content)
+    if (len(split) != 3):
+        ctx.message.author.send("Incorrect number of arguments for ?wincon, format is '?wincon \"game name\" wincon' (the double quotes around game name are required).")
+    else:
+        run_game.change_wincon(ctx.message.author, split[1], split[2])
+
+@bot.command()
+async def surrender(ctx):
+    '''
+    Command to surrender a game with the name you provide.
+    Format is:
+    ?surrender "gamename"
+
+    Careful! This action cannot be undone. You will continue to receive messages about this game until it ends, but you will no longer be required to submit orders.
+    '''
+    split=shlex.split(ctx.message.content)
+    if (len(split) != 2):
+        ctx.message.author.send("Incorrect number of arguments for ?surrender, format is '?surrender \"gamename\"' (the double quotes around game name are required)")
+    else:
+        run_game.surrender(ctx.message.author, split[1])
 
 async def send_private_message(discord_id,game_name,message):
     #user = bot.get_user(discord_id)
     #await user.send(message)
     print(f'Sending {message} to {discord_id}')
+
+@commands.Cog.listener()
+async def on_command_error(self, ctx, error):
+    print(f'Handling... {error}')
 
 #bot.run(TOKEN)
