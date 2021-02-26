@@ -1,5 +1,5 @@
 import json
-import game_vars
+from . import game_vars
 def parse_orders(order_arr, game_doc, owner):
     # break out the array
     formatted_orders=[]

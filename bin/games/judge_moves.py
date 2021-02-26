@@ -1,5 +1,5 @@
 import json
-import game_vars
+from . import game_vars
 
 mapgraph=game_vars.game_map
 adjacency=mapgraph["adjacency"]
