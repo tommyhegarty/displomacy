@@ -1,16 +1,26 @@
-import game_runner.game_vars as v
+import game_vars as gv
 import json
 import random
 import uuid
 import os
 import psycopg2
-from psycopg2.extras import Json
 
 DATABASE_URL = os.environ['DATABASE_URL']
 
-COUNTRIES=[
-    "AUS","ENG","FRA","GER","ITA","RUS","TUR"
-]
+def update_game(game_doc):
+    connection = psycopg2.connect(DATABASE_URL)
+    db = connection.cursor()
+    name = game_doc['name']
+
+    get_game(name)
+
+    db.execute("""
+    UPDATE gamestates SET games = %s WHERE name = %s;
+    """,
+    [json.dumps(game_doc),name])
+
+    connection.commit()
+    connection.close()
 
 def get_game(game_name):
     connection = psycopg2.connect(DATABASE_URL)
@@ -21,10 +31,10 @@ def get_game(game_name):
     [game_name])
     game_doc=db.fetchone()
 
-    if (game_doc == ''):
-        raise NameError("Failed to find a game with that name")
+    if (game_doc == None):
+        raise NameError("Game of that name does not exist")
     else:
-        return game_doc
+        return game_doc[1]
     
     connection.close()
 
@@ -37,8 +47,8 @@ def end_game(game_name):
     [game_name])
     game_doc=db.fetchone()
 
-    if (game_doc == ''):
-        raise NameError("Failed to find a game with that name")
+    if (game_doc == None):
+        raise NameError("Game of that name does not exist")
     else:
         db.execute("""
         DELETE FROM gamestates WHERE name = %s;
@@ -47,46 +57,13 @@ def end_game(game_name):
     connection.commit()
     connection.close()
 
-def assign_players(players):
-    shuffled=COUNTRIES.copy()
-    random.shuffle(shuffled)
-    to_return={
-        shuffled[0]: players[0],
-        shuffled[1]: players[1],
-        shuffled[2]: players[2],
-        shuffled[3]: players[3],
-        shuffled[4]: players[4],
-        shuffled[5]: players[5],
-        shuffled[6]: players[6]
-    }
-    return to_return
-
-def new_game(players, game_name, turn_duration):
+def new_game(game_doc):
     connection = psycopg2.connect(DATABASE_URL)
     db = connection.cursor()
-    game_template=v.template
-    game_template["currently_playing"]=assign_players(players)
-    game_template["name"]=game_name
-    game_template["turn_duration"]=turn_duration
-
+    to_insert=json.dumps(game_doc)    
     db.execute("""
-    SELECT * FROM gamestates name WHERE name = (%s);
+    INSERT INTO gamestates (name, games) VALUES (%s, %s);
     """,
-    [game_name])
-    reject_duplicates=db.fetchone()
-
-    if (reject_duplicates != ''):
-        raise NameError("Name is already in use!")
-
-    try:
-        get_game(game_name)
-        print('Game already exists, not creating a new one.')
-    except NameError:
-        print('Game does not exist, creating.')
-        to_insert=json.dumps(game_template)    
-        db.execute("""
-        INSERT INTO gamestates (name, games) VALUES (%s, %s);
-        """,
-        [game_name, to_insert])
-        connection.commit()
-        connection.close()
+    [game_doc['name'], to_insert])
+    connection.commit()
+    connection.close()

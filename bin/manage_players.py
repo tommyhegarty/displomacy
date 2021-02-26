@@ -41,6 +41,7 @@ def add_game(discord_id, name):
     connection.close()
 
 def get_games(discord_id):
+
     connection=psycopg2.connect(DATABASE_URL)
     db=connection.cursor()
 
@@ -53,3 +54,20 @@ def get_games(discord_id):
     connection.close()
 
     return current_games
+
+def end_game(discord_id,name):
+    try:
+        add_player(discord_id)
+        print(f"Added {discord_id} to the database")
+    except NameError:
+        print("Player already exists, adding to existing.")
+
+    connection=psycopg2.connect(DATABASE_URL)
+    db=connection.cursor()
+
+    db.execute("""
+    UPDATE players SET current_games = array_remove(current_games, %s) WHERE id = %s 
+    """,
+    [name, discord_id])
+    connection.commit()
+    connection.close()
