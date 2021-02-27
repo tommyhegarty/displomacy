@@ -1,5 +1,6 @@
 import json
 from . import game_vars
+from . import judge_moves
 def parse_orders(order_arr, game_doc, owner):
     # break out the array
     formatted_orders=[]
@@ -29,7 +30,8 @@ def parse_orders(order_arr, game_doc, owner):
             'unit_type': u_type,
             'owner': owner
         }
-        formatted_orders.append(new_order)
+        if (judge_moves.valid_order(new_order) != 'INVALID'):
+            formatted_orders.append(new_order)
     return formatted_orders
 
 def all_orders_submitted(game_doc):

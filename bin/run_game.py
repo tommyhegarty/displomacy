@@ -354,12 +354,34 @@ def execute_turn(game_name):
 
     season = game_doc['season']
     full_order_list=[]
+    ordered_units_list=[]
     game_doc['last_orders']=game_doc['next_orders'].copy()
     for country in gv.countries:
         country_orders = game_doc['next_orders'][country]
         for order in country_orders:
             full_order_list.append(order)
+            if (order['command'] == 'MOVE'):
+                ordered_units_list.append(order['conflict'])
+            else:
+                ordered_units_list.append(order['new'])
         game_doc['next_orders'][country]=[]
+    for country in gv.countries:
+        for territory in game_doc['state'][country]['armies']+game_doc['state'][country]['fleets']:
+            if (territory in game_doc['state'][country]['armies']):
+                unit_type='A'
+            else:
+                unit_type='F'
+            if territory not in ordered_units_list:
+                new_order={
+                    'command':'HOL',
+                    'new':territory,
+                    'conflict':territory,
+                    'target':'',
+                    'unit_type':unit_type,
+                    'owner':country
+                }
+                full_order_list.append(new_order)
+                game_doc['next_orders'][country].append(new_order)
     results=process_orders.execute_orders(full_order_list)
     successful_orders=results[0]
     retreat_required=results[1]
