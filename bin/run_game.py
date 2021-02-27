@@ -354,10 +354,12 @@ def execute_turn(game_name):
 
     season = game_doc['season']
     full_order_list=[]
+    game_doc['last_orders']=game_doc['next_orders'].copy()
     for country in gv.countries:
         country_orders = game_doc['next_orders'][country]
         for order in country_orders:
             full_order_list.append(order)
+        game_doc['next_orders'][country]=[]
     results=process_orders.execute_orders(full_order_list)
     successful_orders=results[0]
     retreat_required=results[1]

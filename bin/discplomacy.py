@@ -9,6 +9,10 @@ from discord.ext import commands
 import run_game
 import shlex
 from games import manage_lobby
+from games import game_vars
+import PIL
+from maps import draw_map
+import io
 
 TOKEN=cfg.token
 prefix="?"
@@ -26,7 +30,7 @@ async def test(ctx):
     print(ctx.message.author)
     print(ctx.message.author.id)
     print(ctx.message.content)
-    await send_private_message(ctx.message.author, 'TEST','This is a test message')
+    await send_image(ctx.message.author, game_vars.template)
 
 @bot.group()
 async def game(ctx):
@@ -95,7 +99,6 @@ async def start(ctx):
             game_doc=run_game.start_game(players, name, turn_duration)
             await send_game_start(ctx.message.channel, name, game_doc, players)
         
-
 @game.command()
 async def view(ctx):
     '''
@@ -197,7 +200,6 @@ async def supply(ctx):
         if (supply_over):
             await notify_supply_complete(game_doc)
 
-
 @bot.command()
 async def wincon(ctx):
     '''
@@ -229,8 +231,6 @@ async def surrender(ctx):
         await ctx.message.author.send("Incorrect number of arguments for ?surrender, format is '?surrender \"gamename\"' (the double quotes around game name are required)")
     else:
         run_game.surrender(str(ctx.message.author.id), split[1])
-
-
 
 @commands.Cog.listener()
 async def on_command_error(self, ctx, error):
@@ -308,5 +308,12 @@ async def send_game_start(channel, game, game_doc, players):
         user_key = str(player.id)
         country = game_doc['currently_playing'][user_key]
         await send_private_message(player, game, f'You have been assigned {country}')
+
+async def send_image(channel, game_doc):
+    image=draw_map.draw_map_from_state(game_doc)
+    with io.BytesIO() as image_binary:
+        image.save(image_binary,'PNG')
+        image_binary.seek(0)
+        await channel.send(file=discord.File(fp=image_binary, filename='current_map_state.png'))
 
 bot.run(TOKEN)
