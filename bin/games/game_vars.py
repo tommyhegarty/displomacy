@@ -57,7 +57,7 @@ template={
             "original":["STP","MOS","WAR","SEV"],
             "controls":["STP","MOS","WAR","SEV"],
             "armies":["MOS","WAR"],
-            "fleets":["STPsc","SEV"],
+            "fleets":["STP","SEV"],
             "wincon":1,
             "surrendered":False
         },
