@@ -1,4 +1,4 @@
-import process_orders as po
+from games import process_orders as po
 
 def make_order(command, new, conflict, target, unit, owner):
     return {
@@ -17,5 +17,3 @@ def test_order_execution():
         make_order('SUP','SER','RUM','BUD','A','RUS')
     ]
     print(po.execute_orders(orders))
-
-test_order_execution()

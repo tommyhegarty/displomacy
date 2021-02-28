@@ -8,18 +8,24 @@ def parse_orders(order_arr, game_doc, owner):
         split_spaces=order.split()
         command=split_spaces[0]
         u_type=split_spaces[1]
+        
         if (command == 'CON' or command == 'SUP'):
             new=split_spaces[2]
             conflict=split_spaces[3]
             target=split_spaces[4]
+            from_space=new
         elif (command == 'MOV'):
+            
             new=split_spaces[3]
             conflict=split_spaces[2]
             target=''
+            from_space=conflict
         elif(command == 'SUP'):
+            
             new=split_spaces[2]
             conflict=split_spaces[2]
             target=''
+            from_space=new
         else:
             raise ValueError("Not a valid command")
         new_order = {
@@ -30,7 +36,7 @@ def parse_orders(order_arr, game_doc, owner):
             'unit_type': u_type,
             'owner': owner
         }
-        if (judge_moves.valid_order(new_order) != 'INVALID'):
+        if (judge_moves.valid_order(new_order) != 'INVALID' and from_space in game_doc['state'][owner]['armies']+game_doc['state'][owner]['fleets']):
             formatted_orders.append(new_order)
     return formatted_orders
 

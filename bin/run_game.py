@@ -10,6 +10,11 @@ from games import process_orders as process_orders
 from players import manage_players as pm
 import asyncio
 
+def clear_last_orders(name):
+    game_doc=gm.get_game(name)
+    game_doc['last_orders']=[]
+    gm.update_game(game_doc)
+
 # returns nothing
 def surrender(player, game_name):
     game=gm.get_game(game_name)
@@ -88,6 +93,9 @@ def check_wincons(game_doc):
             winners=[player]
     
     if(winner_found):
+        game_doc['next_orders']=[]
+        game_doc['last_orders']=[]
+        gm.update_game(game_doc)
         return (winners,players)
     # no single person has won the game, so check if a draw has been agreed upon
     agreed_draw=True
@@ -101,6 +109,10 @@ def check_wincons(game_doc):
             player=list(players.keys())[player_position]
             winners.append(player)
     
+    if(winner_found):
+        game_doc['next_orders']=[]
+        game_doc['last_orders']=[]
+        gm.update_game(game_doc)
     return (winners, players)
 
 # returns list of orders given game name and discord id
@@ -131,10 +143,10 @@ def parse_orders(order_string, discord_id):
 
     # who is this player
     season=game_doc['season']
-    retreats=game_doc['retreats_required']
+    retreats=game_doc['required_retreats']
     if(season == 'winter'):
         raise ValueError('Supply is still ongoing')
-    elif(retreats != []):
+    elif(retreats != {}):
         raise ValueError('Retreats are still being submitted')
 
     players=game_doc['currently_playing']
