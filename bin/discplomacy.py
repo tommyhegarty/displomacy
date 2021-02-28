@@ -39,7 +39,7 @@ async def test(ctx):
         run_tests.make_order('HOL','BUD','BUD','','A','AUS'),
         run_tests.make_order('MOV','TYR','TRI','','A','AUS')
     ]
-    await send_image(ctx.message.author, game_vars.template)
+    #await send_image(ctx.message.author, game_vars.template)
 
 @bot.group()
 async def game(ctx):
@@ -122,8 +122,7 @@ async def view(ctx):
     else:
         print(f'Looking at {split[2]} with author {ctx.message.author.id}')
         game_doc=run_game.get_gamestate(str(ctx.message.author.id), split[2])
-        await return_gamedoc(ctx.message.author.id, split[2], game_doc)
-        await send_image(ctx.message.author, game_doc)
+        await return_gamedoc(str(ctx.message.author.id), split[2], game_doc)
 
 @bot.group()
 async def orders(ctx):
@@ -169,12 +168,9 @@ async def submit(ctx):
         else:
             players=manage_games.get_game(name)['currently_playing'].keys()
             await notify_turn_over(players, name)
-        for player in players:
-                await send_image(bot.get_user(int(player)),run_game.get_gamestate(player,name))
         run_game.clear_last_orders(name)
     else:
         await return_orders_submitted_successfully(str(ctx.message.author.id),name)
-        await send_image(ctx.message.author, run_game.get_gamestate(str(ctx.message.author.id),name))
 
 @orders.command()
 async def see(ctx):
@@ -266,15 +262,28 @@ async def surrender(ctx):
 async def on_command_error(self, ctx, error):
     print(f'Handling... {error}')
 
-async def send_private_message(player,game_name,message):
+async def send_private_message(player,game_name,message,include_gamestate):
     user=bot.get_user(int(player))
+    game_doc=run_game.get_gamestate(player, game_name)
     embed=discord.Embed(
-        title=game_name,
+        title=f'GAME: {game_name}',
         description=message,
         color=discord.Color.dark_green()
     )
-    embed.set_author(name='Discplomacy')
-    sent_message = await user.send(embed=embed)
+    embed.set_author(name='DISCPLOMACY')
+    embed.add_field(name='Country',value=game_doc['currently_playing'][player])
+    
+    if (include_gamestate):
+        game_doc=run_game.get_gamestate(player, game_name)
+        image=draw_map.draw_map_from_state(game_doc)
+        with io.BytesIO() as image_binary:
+            image.save(image_binary,'PNG')
+            image_binary.seek(0)
+            em_file=discord.File(fp=image_binary, filename='current_map_state.png')
+            embed.set_image(url='attachment://current_map_state.png')
+            sent_message = await user.send(embed=embed, file=em_file)
+    else:
+        sent_message = await user.send(embed=embed)
     return sent_message
 
 async def notify_new_phase(game_doc):
@@ -286,7 +295,7 @@ async def notify_supply_complete(game_doc):
     season=game_doc['season']
     game=game_doc['name']
     for player in players.keys():
-        await send_private_message(player,game, f'Winter completed, it is now {season} {year}')
+        await send_private_message(player,game, f'Winter completed, it is now {season} {year}', True)
 
 async def notify_retreat_complete(game_doc):
     players=game_doc['currently_playing']
@@ -294,54 +303,54 @@ async def notify_retreat_complete(game_doc):
     season=game_doc['season']
     game=game_doc['name']
     for player in players.keys():
-        await send_private_message(player,game, f'Retreats completed, it is now {season} {year}')
+        await send_private_message(player,game, f'Retreats completed, it is now {season} {year}', True)
 
 async def notify_reinforcements(positive_supply,name):
     for player in positive_supply.keys():
         supply = positive_supply[player]
-        await send_private_message(player,name,f'You can resupply your forces up to {supply}. Use the ?supply add command, remembering that the only valid supply locations are unoccupied supply centers you began the game with.')
+        await send_private_message(player,name,f'You can resupply your forces up to {supply}. Use the ?supply add command, remembering that the only valid supply locations are unoccupied supply centers you began the game with.', True)
 
 async def notify_disbandment(negative_supply,name):
     for player in negative_supply.keys():
         supply = negative_supply[player]
-        await send_private_message(player,name,f'You must disband your forces up to {supply}. Use the ?supply remove command.')
+        await send_private_message(player,name,f'You must disband your forces up to {supply}. Use the ?supply remove command.', True)
 
 async def notify_retreats_required(retreats,name):
     for player in retreats.keys():
         locations = retreats[player]
-        send_private_message(player, name,f'The turn has executed and you are forced to retreat from the following locations: {locations}')
+        send_private_message(player, name,f'The turn has executed and you are forced to retreat from the following locations: {locations}', True)
 
 async def notify_unit_destroyed(units_destroyed, name):
     for player in units_destroyed:
         locations = units_destroyed[player]
-        await send_private_message(player,name,f'Your units at {locations} was defeated and had nowhere to retreat, so were destroyed.')
+        await send_private_message(player,name,f'Your units at {locations} was defeated and had nowhere to retreat, so were destroyed.', True)
 
 async def notify_game_start(game_doc):
     players=game_doc['currently_playing']
     game=game_doc['name']
     for player in players.keys():
         country = game_doc['currently_playing'][player]
-        await send_private_message(player, game, f'Your game has started! You have been assigned {country}')
+        await send_private_message(player, game, f'Your game has started! You have been assigned {country}', True)
 
 async def return_orders(player, orders, game):
-    await send_private_message(player, game, f'Your currently active orders are {orders}')
+    await send_private_message(player, game, f'Your currently active orders are {orders}', True)
 
 async def return_orders_submitted_successfully(player, game):
-    await send_private_message(player, game, f'You have successfully submitted your orders.')
+    await send_private_message(player, game, f'You have successfully submitted your orders.', True)
 
 async def return_gamedoc(player, game, game_doc):
-    await send_private_message(player, game, f'The current state of the game is {game_doc}')
+    await send_private_message(player, game, f'The current state of the game is attached', True)
 
 async def send_lobby_start(channel, game):
-    message_info=await send_private_message(channel, game, f'Lobby has been started for {game}. React to this message with :white_check_mark: and once 7 people have reacted, issue the \'?game start "{game}\"\' command to begin the game.')
+    message_info=await send_private_message(channel, game, f'Lobby has been started for {game}. React to this message with :white_check_mark: and once 7 people have reacted, issue the \'?game start "{game}\"\' command to begin the game.',False)
     return message_info
 
 async def send_game_start(channel, game, game_doc, players):
-    await send_private_message(channel, game, f'{game} has officially started. Every player should receive a private notification giving them their country assignment. From here on, games will be conducted through private messages between each player and the bot.')
+    await send_private_message(channel, game, f'{game} has officially started. Every player should receive a private notification giving them their country assignment. From here on, games will be conducted through private messages between each player and the bot.',True)
     for player in players:
         user_key = str(player.id)
         country = game_doc['currently_playing'][user_key]
-        await send_private_message(player, game, f'You have been assigned {country}')
+        await send_private_message(player, game, f'You have been assigned {country}', True)
 
 async def notify_game_over(winners, players, name):
     game_doc=run_game.get_gamestate(winners[0],name)
@@ -350,17 +359,11 @@ async def notify_game_over(winners, players, name):
         country=game_doc['currently_playing'][win]
         winner_countries.append(country)
     for player in players:
-        await send_private_message(player, name, f'{name} has ended! {winner_countries} have won the game.')
+        await send_private_message(player, name, f'{name} has ended! {winner_countries} have won the game.', True)
 
 async def notify_turn_over(players, name):
     for player in players:
-        await send_private_message(player, name, f'{name} has finished the season.')
+        await send_private_message(player, name, f'{name} has finished the season.', True)
 
-async def send_image(channel, game_doc):
-    image=draw_map.draw_map_from_state(game_doc)
-    with io.BytesIO() as image_binary:
-        image.save(image_binary,'PNG')
-        image_binary.seek(0)
-        await channel.send(file=discord.File(fp=image_binary, filename='current_map_state.png'))
 
 bot.run(TOKEN)
