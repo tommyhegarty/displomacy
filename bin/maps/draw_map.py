@@ -47,8 +47,8 @@ def draw_con(draw, order, color):
 
 def draw_orders(draw, game_doc):
     orders=game_doc['next_orders']
-    if (all(value == [] for value in orders.values())):
-        orders=game_doc['last_orders']
+    print(orders)
+    
     if (all(value == [] for value in orders.values())):
         return draw
     else:

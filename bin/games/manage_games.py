@@ -7,6 +7,31 @@ import psycopg2
 
 DATABASE_URL = os.environ['DATABASE_URL']
 
+def get_next_turns():
+    connection = psycopg2.connect(DATABASE_URL)
+    db =connection.cursor()
+    db.execute("""
+    SELECT name, next_turn FROM gamestates;
+    """)
+
+    result = db.fetchall()
+    connection.close()
+    return result
+
+def update_next_turn(game_name,next_turn):
+    connection = psycopg2.connect(DATABASE_URL)
+    db = connection.cursor()
+
+    get_game(game_name)
+
+    db.execute("""
+    UPDATE gamestates SET next_turn = %s WHERE name = %s;
+    """,
+    [next_turn,game_name])
+
+    connection.commit()
+    connection.close()
+
 def update_game(game_doc):
     connection = psycopg2.connect(DATABASE_URL)
     db = connection.cursor()
@@ -57,13 +82,13 @@ def end_game(game_name):
     connection.commit()
     connection.close()
 
-def new_game(game_doc):
+def new_game(game_doc, next_turn):
     connection = psycopg2.connect(DATABASE_URL)
     db = connection.cursor()
     to_insert=json.dumps(game_doc)    
     db.execute("""
-    INSERT INTO gamestates (name, games) VALUES (%s, %s);
+    INSERT INTO gamestates (name, games, next_turn) VALUES (%s, %s, %s);
     """,
-    [game_doc['name'], to_insert])
+    [game_doc['name'], to_insert, next_turn])
     connection.commit()
     connection.close()

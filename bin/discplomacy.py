@@ -4,25 +4,44 @@ import os
 import discord
 import cfg
 import asyncio
-from datetime import datetime
-from discord.ext import commands
+from datetime import datetime,  timedelta
+from discord.ext import commands, tasks
 import run_game
 import shlex
-from games import manage_lobby
-from games import game_vars
-from games import manage_games
+from games import manage_lobby, game_vars, manage_games
 import run_tests
 import PIL
 from maps import draw_map
 import io
 
+intents = discord.Intents().all()
 TOKEN=cfg.token
 prefix="?"
-bot=commands.Bot(command_prefix=prefix)
+bot=commands.Bot(command_prefix=prefix, intents=intents)
+
+@tasks.loop(minutes=1.0)
+async def check_next_turns():
+    print('Checking...')
+    now = datetime.now()
+    next_turns=manage_games.get_next_turns()
+    for (game,turn) in next_turns:
+        turn=datetime.strptime(turn,'%Y-%m-%d %H:%M:%S.%f')
+        if turn < now:
+            doc=manage_games.get_game(game)
+            print(doc)
+            if (doc['required_retreats'] != {}):
+                run_game.fail_retreats(game)
+                await notify_retreat_complete(doc)
+            if (doc['season'] == 'winter'):
+                run_game.fail_supplies(game)
+                await notify_supply_complete(doc)
+            if (doc['required_retreats'] == {} and doc['season'] != 'winter'):
+                await run_full_turn(game)
 
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
+    check_next_turns.start()
 
 @bot.command(pass_context=True)
 async def test(ctx):
@@ -32,13 +51,9 @@ async def test(ctx):
     print(ctx.message.author)
     print(ctx.message.author.id)
     print(ctx.message.content)
-    game_doc=game_vars.template
+    #timetogo=datetime.now()+timedelta(minutes=1)
+    #manage_games.update_next_turn('full game',str(timetogo))
     # make_order(command, new, conflict, target, unit, owner)
-    game_doc['next_orders']['AUS']=[
-        run_tests.make_order('MOV','BOH','VIE','','A','AUS'),
-        run_tests.make_order('HOL','BUD','BUD','','A','AUS'),
-        run_tests.make_order('MOV','TYR','TRI','','A','AUS')
-    ]
     #await send_image(ctx.message.author, game_vars.template)
 
 @bot.group()
@@ -120,7 +135,6 @@ async def view(ctx):
     if (len(split) != 3):
         await ctx.message.author.send("Incorrect number of arguments for ?game view, format is '?game view \"game name\"' (the double quotes around game name are required).")
     else:
-        print(f'Looking at {split[2]} with author {ctx.message.author.id}')
         game_doc=run_game.get_gamestate(str(ctx.message.author.id), split[2])
         await return_gamedoc(str(ctx.message.author.id), split[2], game_doc)
 
@@ -151,24 +165,7 @@ async def submit(ctx):
     '''
     (all_orders, name)=run_game.parse_orders(ctx.message.content, str(ctx.message.author.id))
     if (all_orders):
-        (result, result_tuple)=run_game.execute_turn(name)
-        if (result == 'RETREAT'):
-            (retreats_required,units_destroyed)=result_tuple
-            await notify_retreats_required(retreats_required,name)
-            await notify_unit_destroyed(units_destroyed,name)
-            players=manage_games.get_game(name)['currently_playing'].keys()
-        elif (result == 'SUPPLY'):
-            (positive_supply, negative_supply)=result_tuple
-            await notify_reinforcements(positive_supply,name)
-            await notify_disbandment(negative_supply,name)
-            players=manage_games.get_game(name)['currently_playing'].keys()
-        elif (result == 'GAME END'):
-            (winners, players)=result_tuple
-            await notify_game_over(winners, players, name)
-        else:
-            players=manage_games.get_game(name)['currently_playing'].keys()
-            await notify_turn_over(players, name)
-        run_game.clear_last_orders(name)
+        await run_full_turn(name)
     else:
         await return_orders_submitted_successfully(str(ctx.message.author.id),name)
 
@@ -262,29 +259,74 @@ async def surrender(ctx):
 async def on_command_error(self, ctx, error):
     print(f'Handling... {error}')
 
-async def send_private_message(player,game_name,message,include_gamestate):
-    user=bot.get_user(int(player))
-    game_doc=run_game.get_gamestate(player, game_name)
-    embed=discord.Embed(
-        title=f'GAME: {game_name}',
-        description=message,
-        color=discord.Color.dark_green()
-    )
-    embed.set_author(name='DISCPLOMACY')
-    embed.add_field(name='Country',value=game_doc['currently_playing'][player])
-    
-    if (include_gamestate):
-        game_doc=run_game.get_gamestate(player, game_name)
-        image=draw_map.draw_map_from_state(game_doc)
-        with io.BytesIO() as image_binary:
-            image.save(image_binary,'PNG')
-            image_binary.seek(0)
-            em_file=discord.File(fp=image_binary, filename='current_map_state.png')
-            embed.set_image(url='attachment://current_map_state.png')
-            sent_message = await user.send(embed=embed, file=em_file)
+async def run_full_turn(name):
+    (result, result_tuple)=run_game.execute_turn(name)
+    print(result)
+    print(result_tuple)
+    if (result == 'RETREAT'):
+        (retreats_required,units_destroyed)=result_tuple
+        await notify_retreats_required(retreats_required,name)
+        await notify_unit_destroyed(units_destroyed,name)
+        players=manage_games.get_game(name)['currently_playing'].keys()
+    elif (result == 'SUPPLY'):
+        (positive_supply, negative_supply)=result_tuple
+        await notify_reinforcements(positive_supply,name)
+        await notify_disbandment(negative_supply,name)
+        players=manage_games.get_game(name)['currently_playing'].keys()
+    elif (result == 'GAME END'):
+        (winners, players)=result_tuple
+        await notify_game_over(winners, players, name)
     else:
-        sent_message = await user.send(embed=embed)
-    return sent_message
+        players=manage_games.get_game(name)['currently_playing'].keys()
+        await notify_turn_over(players, name)
+    run_game.clear_last_orders(name)
+    turn_duration=manage_games.get_game(name)['turn_duration']
+    now=datetime.now()
+    if(turn_duration=='10 minutes'):
+        turn=timedelta(minutes=10)
+    elif(turn_duration=='1 hour'):
+        turn=timedelta(hours=1)
+    elif(turn_duration=='24 hours'):
+        turn=timedelta(hours=24)
+    next_turn=now+turn
+    manage_games.update_next_turn(name, str(next_turn))
+
+async def send_private_message(player,game_name,message,include_gamestate):
+    try:
+        print(f'Communicating with {int(player)}')
+        user=bot.get_user(int(player))
+        print(f'User object is {user}')
+    except:
+        print(f'Something went horribly wrong sending to {player}')
+        return None
+    try:
+        game_doc=run_game.get_gamestate(player, game_name)
+        embed=discord.Embed(
+            title=f'GAME: {game_name}',
+            description=message,
+            color=discord.Color.dark_green()
+        )
+
+        season=game_doc['season']
+        year=game_doc['year']
+        embed.set_author(name='DISCPLOMACY')
+        embed.add_field(name='Country',value=game_doc['currently_playing'][player], inline=True)
+        embed.add_field(name='Season',value=f'{season} {year}',inline=True)
+        
+        if (include_gamestate):
+            game_doc=run_game.get_gamestate(player, game_name)
+            image=draw_map.draw_map_from_state(game_doc)
+            with io.BytesIO() as image_binary:
+                image.save(image_binary,'PNG')
+                image_binary.seek(0)
+                em_file=discord.File(fp=image_binary, filename='current_map_state.png')
+                embed.set_image(url='attachment://current_map_state.png')
+                sent_message = await user.send(embed=embed, file=em_file)
+        else:
+            sent_message = await user.send(embed=embed)
+        return sent_message
+    except Exception as inst:
+        print(inst)
 
 async def notify_new_phase(game_doc):
     print('here is where we notify a new phase')
@@ -353,7 +395,8 @@ async def send_game_start(channel, game, game_doc, players):
         await send_private_message(player, game, f'You have been assigned {country}', True)
 
 async def notify_game_over(winners, players, name):
-    game_doc=run_game.get_gamestate(winners[0],name)
+    game_doc=manage_games.get_game(name)
+    manage_games.end_game(name)
     winner_countries=[]
     for win in winners:
         country=game_doc['currently_playing'][win]
@@ -365,5 +408,6 @@ async def notify_turn_over(players, name):
     for player in players:
         await send_private_message(player, name, f'{name} has finished the season.', True)
 
-
+timetogo=datetime.now()+timedelta(minutes=1)
+manage_games.update_next_turn('game 3',str(timetogo))
 bot.run(TOKEN)
