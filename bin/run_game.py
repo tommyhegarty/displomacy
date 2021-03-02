@@ -297,6 +297,7 @@ def execute_supply(player,name, addremove, unit, location):
     if (game_doc['required_supply'] == {}):
         game_doc['year']=game_doc['year']+1
         game_doc['season']='spring'
+        gm.update_game(game_doc)
         return (True, game_doc)
     
     gm.update_game(game_doc)
