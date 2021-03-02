@@ -103,11 +103,11 @@ def execute_convoy(convoy_orders, move_order):
                 found_move=True
                 break
         if (not found_move):
-            return False
+            return []
         next_step_loc=next_step["new"]
         if (next_step_loc in possible_conflicts):
-            return False
-    return True
+            return []
+    return convoy_orders
 
 def execute_orders(list_of_orders):
 
@@ -154,7 +154,7 @@ def execute_orders(list_of_orders):
         
         convoy_success=execute_convoy(convoys_for_move,order)
         
-        if (convoy_success):
+        if (convoy_success != []):
             successful_orders.append(convoy_success)
         else:
             failed_orders.append(order)

@@ -9,10 +9,44 @@ from games import game_vars as gv
 from games import process_orders as process_orders
 from players import manage_players as pm
 import asyncio
+from datetime import datetime, timedelta
+
+def fail_retreats(name):
+    doc = gm.get_game(name)
+    retreats = doc['required_retreats']
+    for country in retreats.keys():
+        country_retreats = retreats[country]
+        while country_retreats:
+            (fromloc,available) = country_retreats.pop(0)
+            toloc=available[0]
+            try:
+                doc['state'][country]['armies'].remove(fromloc)
+                doc['state'][country]['armies'].append(toloc)
+            except:
+                doc['state'][country]['fleets'].remove(fromloc)
+                doc['state'][country]['fleets'].append(toloc)
+    doc['required_retreats']={}
+    gm.update_game(doc)
+
+def fail_supplies(name):
+    doc=gm.get_game(name)
+    supplies=doc['required_supply']
+    for country in supplies.keys():
+        supply = supplies[country]
+        while (supply < 0):
+            if (doc['state'][country]['armies'] != []):
+                doc['state'][country]['armies'].pop(0)
+            elif (doc['state'][country]['fleets'] != []):
+                doc['state'][country]['fleets'].pop(0)
+            supply = supply +1
+    doc['required_supply']={}
+    doc['year']=doc['year']+1
+    doc['season']='spring'
+    gm.update_game(doc)
 
 def clear_last_orders(name):
     game_doc=gm.get_game(name)
-    game_doc['last_orders']=[]
+    game_doc['last_orders']={}
     gm.update_game(game_doc)
 
 # returns nothing
@@ -41,7 +75,6 @@ def change_wincon(player, game_name, wincon):
 def get_gamestate(player, game_name):
     game_doc=gm.get_game(game_name)
     keys=game_doc['currently_playing'].keys()
-    print(f'Checking {player} against {keys}')
     if (player not in keys):
         raise NameError('You are not playing in this game')
     player_country=game_doc['currently_playing'][player]
@@ -71,7 +104,16 @@ def start_game(players, name, turn_duration):
     game_template["name"]=name
     game_template["turn_duration"]=turn_duration
 
-    gm.new_game(game_template)
+    now=datetime.now()
+    if(turn_duration=='10 minutes'):
+        turn=timedelta(minutes=10)
+    elif(turn_duration=='1 hour'):
+        turn=timedelta(hours=1)
+    elif(turn_duration=='24 hours'):
+        turn=timedelta(hours=24)
+    next_turn=now+turn
+
+    gm.new_game(game_template,next_turn)
     return game_template
 
 # returns (array, array) that is (winners so far, currently active players)
@@ -86,25 +128,27 @@ def check_wincons(game_doc):
         if (game_doc['state'][country]['surrendered'] == False):
             non_surrendered_countries.append((country, num_winners))
         if (num_winners == 1 and total_control > 17):
-            print(f'Country {country} has won the game.')
             player_position=list(players.values()).index(country)
             player=list(players.keys())[player_position]
             winner_found=True
             winners=[player]
     
     if(winner_found):
+        print(f'Found a single winner, {winners[0]}')
         game_doc['next_orders']=[]
         game_doc['last_orders']=[]
         gm.update_game(game_doc)
         return (winners,players)
     # no single person has won the game, so check if a draw has been agreed upon
+
     agreed_draw=True
-    for (country, winners) in non_surrendered_countries:
-        if (winners >= len(non_surrendered_countries)):
-            agreed_draw == False
+    for (country, wincon) in non_surrendered_countries:
+        print(f'Wincon of {wincon} for country {country}, there are {len(non_surrendered_countries)} countries still playing.')
+        if (wincon <= len(non_surrendered_countries)):
+            agreed_draw = False
     winners=[]
     if (agreed_draw):
-        for (country, winners) in non_surrendered_countries:
+        for (country, wincon) in non_surrendered_countries:
             player_position=list(players.values()).index(country)
             player=list(players.keys())[player_position]
             winners.append(player)
@@ -188,6 +232,7 @@ def start_supply(game_doc):
             game_doc['required_supply'][country]=supp_required
             disbandments_doc[player]=(supp_required,name)
     
+    gm.update_game(game_doc)
     return (reinforcements_doc, disbandments_doc)
 
 # returns (boolean, dict) that is (supply completed true/false, game doc state)            
@@ -249,7 +294,7 @@ def execute_supply(player,name, addremove, unit, location):
     else:
         raise ValueError('Invalid command.')
 
-    if (game_doc['required_supply'] == 0):
+    if (game_doc['required_supply'] == {}):
         game_doc['year']=game_doc['year']+1
         game_doc['season']='spring'
         return (True, game_doc)
@@ -271,10 +316,10 @@ def update_map(orders, season, game_doc):
                 unit='armies'
             else:
                 unit='fleets'
-            
+
             game_doc['state'][to_update][unit].remove(move_from)
             game_doc['state'][to_update][unit].append(move_to)
-            if (season == 'fall'):
+            if (season == 'fall' and move_to in gv.game_map['SUPPLY']):
                 for country in gv.countries:
                     if(move_to in game_doc['state'][country]['controls']):
                         game_doc['state'][country]['controls'].remove(move_to)
@@ -319,7 +364,7 @@ def retreat_needed(retreats, game_doc):
                 game_doc['required_retreats'][country].append((fromloc,available))
                 retreats_req[player].append(fromloc)
             except:
-                game_doc['required_retreats'][country]=(fromloc,available)
+                game_doc['required_retreats'][country]=[(fromloc,available)]
                 retreats_req[player]=[fromloc]
 
     return (retreats_req, units_destroyed)
@@ -365,18 +410,17 @@ def execute_turn(game_name):
     game_doc=gm.get_game(game_name)
 
     season = game_doc['season']
+    game_doc['last_orders']={}
     full_order_list=[]
     ordered_units_list=[]
-    game_doc['last_orders']=game_doc['next_orders'].copy()
     for country in gv.countries:
         country_orders = game_doc['next_orders'][country]
         for order in country_orders:
             full_order_list.append(order)
-            if (order['command'] == 'MOVE'):
+            if (order['command'] == 'MOV'):
                 ordered_units_list.append(order['conflict'])
             else:
                 ordered_units_list.append(order['new'])
-        game_doc['next_orders'][country]=[]
     for country in gv.countries:
         for territory in game_doc['state'][country]['armies']+game_doc['state'][country]['fleets']:
             if (territory in game_doc['state'][country]['armies']):
@@ -398,25 +442,29 @@ def execute_turn(game_name):
     successful_orders=results[0]
     retreat_required=results[1]
 
-    game_doc=update_map(successful_orders, season,game_doc)
-
     if (season == 'spring'):
         new_season = 'fall'
     else:
         new_season ='winter'
     
+    print(f'Successful orders are {successful_orders}')
+    print(f'Retreats required are  {retreat_required}')
     game_doc=update_map(successful_orders,season,game_doc)
     game_doc['season']=new_season
+
+    for country in gv.countries:
+        game_doc['last_orders'][country]=game_doc['next_orders'][country].copy()
+        game_doc['next_orders'][country]=[]
     gm.update_game(game_doc)
     
     if(retreat_required != []):
         return ('RETREAT',retreat_needed(retreat_required,game_doc))
     elif (new_season == 'winter'):
+        print(f'It is winter, checking {game_doc}')
         (winners, players)=check_wincons(game_doc)
         if (winners == []):
             return ('SUPPLY', start_supply(game_doc))
         else:
-            end_game(game_doc)
             return ('GAME END',(winners,players))
     else:
         return ('TURN END',[])
