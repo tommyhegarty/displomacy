@@ -28,14 +28,19 @@ async def check_next_turns():
         turn=datetime.strptime(turn,'%Y-%m-%d %H:%M:%S.%f')
         if turn < now:
             doc=manage_games.get_game(game)
-            print(doc)
-            if (doc['required_retreats'] != {}):
+            retr=doc['required_retreats']
+            seas=doc['season']
+            if (retr != {}):
+                print('Retreating')
                 run_game.fail_retreats(game)
+                doc=manage_games.get_game(game)
                 await notify_retreat_complete(doc)
-            if (doc['season'] == 'winter'):
+            if (seas == 'winter'):
                 run_game.fail_supplies(game)
+                doc=manage_games.get_game(game)
                 await notify_supply_complete(doc)
-            if (doc['required_retreats'] == {} and doc['season'] != 'winter'):
+                break
+            if (retr == {} and seas != 'winter'):
                 await run_full_turn(game)
 
 @bot.event
@@ -99,7 +104,6 @@ async def start(ctx):
     else:
         try:
             message_id = manage_lobby.get_message_id(split[2])
-            print(message_id)
         except:
             await ctx.message.channel.send("Lobby of that name does not exist.")
             return
@@ -107,10 +111,8 @@ async def start(ctx):
         reactions=msg.reactions
         players = []
         for react in reactions:
-            print(react.emoji)
             if (react.emoji == '✅'):
                 players = await react.users().flatten()
-                print(players)
                 if (len(players) != 7):
                     await ctx.message.channel.send("Incorrect number of players -- there must be exactly 7.")
                     return
@@ -261,8 +263,6 @@ async def on_command_error(self, ctx, error):
 
 async def run_full_turn(name):
     (result, result_tuple)=run_game.execute_turn(name)
-    print(result)
-    print(result_tuple)
     if (result == 'RETREAT'):
         (retreats_required,units_destroyed)=result_tuple
         await notify_retreats_required(retreats_required,name)
@@ -293,9 +293,7 @@ async def run_full_turn(name):
 
 async def send_private_message(player,game_name,message,include_gamestate):
     try:
-        print(f'Communicating with {int(player)}')
         user=bot.get_user(int(player))
-        print(f'User object is {user}')
     except:
         print(f'Something went horribly wrong sending to {player}')
         return None
@@ -360,7 +358,7 @@ async def notify_disbandment(negative_supply,name):
 async def notify_retreats_required(retreats,name):
     for player in retreats.keys():
         locations = retreats[player]
-        send_private_message(player, name,f'The turn has executed and you are forced to retreat from the following locations: {locations}', True)
+        await send_private_message(player, name,f'The turn has executed and you are forced to retreat from the following locations: {locations}', True)
 
 async def notify_unit_destroyed(units_destroyed, name):
     for player in units_destroyed:
@@ -409,5 +407,5 @@ async def notify_turn_over(players, name):
         await send_private_message(player, name, f'{name} has finished the season.', True)
 
 timetogo=datetime.now()+timedelta(minutes=1)
-manage_games.update_next_turn('game 3',str(timetogo))
+manage_games.update_next_turn('game',str(timetogo))
 bot.run(TOKEN)

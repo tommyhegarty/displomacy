@@ -16,9 +16,11 @@ def fail_retreats(name):
     retreats = doc['required_retreats']
     for country in retreats.keys():
         country_retreats = retreats[country]
+        print(country_retreats)
         while country_retreats:
             (fromloc,available) = country_retreats.pop(0)
             toloc=available[0]
+            print(toloc)
             try:
                 doc['state'][country]['armies'].remove(fromloc)
                 doc['state'][country]['armies'].append(toloc)
@@ -26,6 +28,7 @@ def fail_retreats(name):
                 doc['state'][country]['fleets'].remove(fromloc)
                 doc['state'][country]['fleets'].append(toloc)
     doc['required_retreats']={}
+    print(doc)
     gm.update_game(doc)
 
 def fail_supplies(name):
@@ -305,6 +308,7 @@ def execute_supply(player,name, addremove, unit, location):
 
 # returns (dict) that is (game_doc after being updated)
 def update_map(orders, season, game_doc):
+    print(orders)
     for order in orders:
         command = order['command']
         if (command == "MOV"):
@@ -339,7 +343,7 @@ def retreat_needed(retreats, game_doc):
         unit=retreat['unit_type']
         fromloc=retreat['location']
         available=gv.game_map['adjacency'][fromloc]
-        available.remove(retreat['attack_loc'])
+        available.remove(retreat['attacked_loc'])
         country=retreat['owner']
 
         player_position=list(players.values()).index(country)
@@ -464,7 +468,14 @@ def execute_turn(game_name):
         print(f'It is winter, checking {game_doc}')
         (winners, players)=check_wincons(game_doc)
         if (winners == []):
-            return ('SUPPLY', start_supply(game_doc))
+            supp=start_supply(game_doc)
+            if (supp != ([],[])):
+                return ('SUPPLY', supp)
+            else:
+                game_doc['year']=game_doc['year']+1
+                game_doc['season']='spring'
+                gm.update_game(game_doc)
+                return ('TURN END',[])
         else:
             return ('GAME END',(winners,players))
     else:

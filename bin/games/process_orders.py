@@ -94,20 +94,21 @@ def execute_convoy(convoy_orders, move_order):
     # move order is the unit being convoyed
     current_location = move_order["conflict"]
     next_step=move_order
-    while convoy_orders:
-        found_move=False
-        for checking_adj in convoy_orders:
-            fleet_location = checking_adj["new"]
-            if (judge_moves.is_adjacent(current_location,fleet_location)):
-                next_step=checking_adj
-                found_move=True
-                break
-        if (not found_move):
-            return []
-        next_step_loc=next_step["new"]
-        if (next_step_loc in possible_conflicts):
-            return []
-    return convoy_orders
+    current_path=[]
+
+    print(f'Move order is {move_order}')
+    print(f'Convoys are {convoy_orders}')
+
+    while next_step['conflict'] != move_order['new']:
+        next_step = [x for x in convoy_orders if judge_moves.is_adjacent(x['new'],current_location)]
+        if (next_step == []):
+            return next_step
+        else:
+            next_step=next_step[0]
+        convoy_orders.remove(next_step)
+        current_path.append(next_step)
+    
+    return current_path
 
 def execute_orders(list_of_orders):
 
@@ -145,17 +146,13 @@ def execute_orders(list_of_orders):
         new_location = order["new"]
         old_location = order["conflict"]
 
-        convoys_for_move=[]
-        for convoy_order in convoys:
-            convoy_destination=convoy_order["new"]
-            convoy_target=convoy_order["target"]
-            if (new_location == convoy_destination and old_location == convoy_target):
-                convoys_for_move.append(convoy_order)
-        
+        convoys_for_move=[a for a in convoys if (a['conflict'] == new_location and a['target'] == old_location)]
         convoy_success=execute_convoy(convoys_for_move,order)
         
         if (convoy_success != []):
-            successful_orders.append(convoy_success)
+            for convoy in convoys_for_move:
+                successful_orders.append(convoy)
+            successful_orders.append(order)
         else:
             failed_orders.append(order)
             for convoy in convoys_for_move:
