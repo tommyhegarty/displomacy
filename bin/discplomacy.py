@@ -21,21 +21,29 @@ bot=commands.Bot(command_prefix=prefix, intents=intents)
 
 @tasks.loop(minutes=1.0)
 async def check_next_turns():
-    print('Checking...')
     now = datetime.now()
     next_turns=manage_games.get_next_turns()
     for (game,turn) in next_turns:
         turn=datetime.strptime(turn,'%Y-%m-%d %H:%M:%S.%f')
         if turn < now:
+            print('Checking ... ')
             doc=manage_games.get_game(game)
             print(doc)
-            if (doc['required_retreats'] != {}):
+            retr=doc['required_retreats']
+            seas=doc['season']
+            if (retr != {}):
+                print('Retreating')
                 run_game.fail_retreats(game)
+                doc=manage_games.get_game(game)
                 await notify_retreat_complete(doc)
-            if (doc['season'] == 'winter'):
+            if (seas == 'winter'):
+                print('Its winter, failing supplies')
                 run_game.fail_supplies(game)
+                doc=manage_games.get_game(game)
                 await notify_supply_complete(doc)
-            if (doc['required_retreats'] == {} and doc['season'] != 'winter'):
+                break
+            if (retr == {} and seas != 'winter'):
+                print('Running full turn')
                 await run_full_turn(game)
 
 @bot.event
@@ -99,7 +107,6 @@ async def start(ctx):
     else:
         try:
             message_id = manage_lobby.get_message_id(split[2])
-            print(message_id)
         except:
             await ctx.message.channel.send("Lobby of that name does not exist.")
             return
@@ -107,10 +114,8 @@ async def start(ctx):
         reactions=msg.reactions
         players = []
         for react in reactions:
-            print(react.emoji)
             if (react.emoji == '✅'):
                 players = await react.users().flatten()
-                print(players)
                 if (len(players) != 7):
                     await ctx.message.channel.send("Incorrect number of players -- there must be exactly 7.")
                     return
@@ -261,17 +266,17 @@ async def on_command_error(self, ctx, error):
 
 async def run_full_turn(name):
     (result, result_tuple)=run_game.execute_turn(name)
-    print(result)
-    print(result_tuple)
     if (result == 'RETREAT'):
         (retreats_required,units_destroyed)=result_tuple
         await notify_retreats_required(retreats_required,name)
         await notify_unit_destroyed(units_destroyed,name)
+        await notify_retreat_phase(name)
         players=manage_games.get_game(name)['currently_playing'].keys()
     elif (result == 'SUPPLY'):
         (positive_supply, negative_supply)=result_tuple
         await notify_reinforcements(positive_supply,name)
         await notify_disbandment(negative_supply,name)
+        await notify_supply_phase(name)
         players=manage_games.get_game(name)['currently_playing'].keys()
     elif (result == 'GAME END'):
         (winners, players)=result_tuple
@@ -293,9 +298,7 @@ async def run_full_turn(name):
 
 async def send_private_message(player,game_name,message,include_gamestate):
     try:
-        print(f'Communicating with {int(player)}')
         user=bot.get_user(int(player))
-        print(f'User object is {user}')
     except:
         print(f'Something went horribly wrong sending to {player}')
         return None
@@ -328,6 +331,16 @@ async def send_private_message(player,game_name,message,include_gamestate):
     except Exception as inst:
         print(inst)
 
+async def notify_retreat_phase(name):
+    doc = manage_games.get_game(name)
+    for player in doc['currently_playing'].keys():
+        await send_private_message(player, name, 'Turn over, retreat phase started.',True)
+
+async def notify_supply_phase(name):
+    doc = manage_games.get_game(name)
+    for player in doc['currently_playing'].keys():
+        await send_private_message(player, name, 'Turn over, retreat phase started.',True)
+
 async def notify_new_phase(game_doc):
     print('here is where we notify a new phase')
 
@@ -350,22 +363,22 @@ async def notify_retreat_complete(game_doc):
 async def notify_reinforcements(positive_supply,name):
     for player in positive_supply.keys():
         supply = positive_supply[player]
-        await send_private_message(player,name,f'You can resupply your forces up to {supply}. Use the ?supply add command, remembering that the only valid supply locations are unoccupied supply centers you began the game with.', True)
+        await send_private_message(player,name,f'You can resupply your forces up to {supply}. Use the ?supply add command, remembering that the only valid supply locations are unoccupied supply centers you began the game with.', False)
 
 async def notify_disbandment(negative_supply,name):
     for player in negative_supply.keys():
         supply = negative_supply[player]
-        await send_private_message(player,name,f'You must disband your forces up to {supply}. Use the ?supply remove command.', True)
+        await send_private_message(player,name,f'You must disband your forces up to {supply}. Use the ?supply remove command.', False)
 
 async def notify_retreats_required(retreats,name):
     for player in retreats.keys():
         locations = retreats[player]
-        send_private_message(player, name,f'The turn has executed and you are forced to retreat from the following locations: {locations}', True)
+        await send_private_message(player, name,f'The turn has executed and you are forced to retreat from the following locations: {locations}', False)
 
 async def notify_unit_destroyed(units_destroyed, name):
     for player in units_destroyed:
         locations = units_destroyed[player]
-        await send_private_message(player,name,f'Your units at {locations} was defeated and had nowhere to retreat, so were destroyed.', True)
+        await send_private_message(player,name,f'Your units at {locations} was defeated and had nowhere to retreat, so were destroyed.', False)
 
 async def notify_game_start(game_doc):
     players=game_doc['currently_playing']
@@ -409,5 +422,5 @@ async def notify_turn_over(players, name):
         await send_private_message(player, name, f'{name} has finished the season.', True)
 
 timetogo=datetime.now()+timedelta(minutes=1)
-manage_games.update_next_turn('game 3',str(timetogo))
+manage_games.update_next_turn('game',str(timetogo))
 bot.run(TOKEN)

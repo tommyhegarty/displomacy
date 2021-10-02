@@ -14,11 +14,15 @@ from datetime import datetime, timedelta
 def fail_retreats(name):
     doc = gm.get_game(name)
     retreats = doc['required_retreats']
+    print(f'Retreats are {retreats}')
     for country in retreats.keys():
         country_retreats = retreats[country]
+        print(f'Retreats for {country} are {country_retreats}')
+        print(country_retreats)
         while country_retreats:
             (fromloc,available) = country_retreats.pop(0)
             toloc=available[0]
+            print(toloc)
             try:
                 doc['state'][country]['armies'].remove(fromloc)
                 doc['state'][country]['armies'].append(toloc)
@@ -26,6 +30,7 @@ def fail_retreats(name):
                 doc['state'][country]['fleets'].remove(fromloc)
                 doc['state'][country]['fleets'].append(toloc)
     doc['required_retreats']={}
+    print(doc)
     gm.update_game(doc)
 
 def fail_supplies(name):
@@ -297,6 +302,7 @@ def execute_supply(player,name, addremove, unit, location):
     if (game_doc['required_supply'] == {}):
         game_doc['year']=game_doc['year']+1
         game_doc['season']='spring'
+        gm.update_game(game_doc)
         return (True, game_doc)
     
     gm.update_game(game_doc)
@@ -304,6 +310,7 @@ def execute_supply(player,name, addremove, unit, location):
 
 # returns (dict) that is (game_doc after being updated)
 def update_map(orders, season, game_doc):
+    print(orders)
     for order in orders:
         command = order['command']
         if (command == "MOV"):
@@ -319,12 +326,21 @@ def update_map(orders, season, game_doc):
 
             game_doc['state'][to_update][unit].remove(move_from)
             game_doc['state'][to_update][unit].append(move_to)
-            if (season == 'fall' and move_to in gv.game_map['SUPPLY']):
-                for country in gv.countries:
-                    if(move_to in game_doc['state'][country]['controls']):
-                        game_doc['state'][country]['controls'].remove(move_to)
-                game_doc['state'][to_update]['controls'].append(move_to)
+            
     game_doc['season']=season
+
+    if (season == 'fall' and move_to in gv.game_map['SUPPLY']):
+        changed_hands=[]
+        for supp_center in gv.game_map['SUPPLY']:
+            for country in gv.countries:
+                if (supp_center in game_doc['state'][country]['armies']+game_doc['state'][country]['fleets'] and supp_center not in game_doc['state'][country]['controls']):
+                    game_doc['state'][country]['controls'].append(supp_center)
+                    changed_hands.append(supp_center)
+        for country in gv.countries:
+            for change in changed_hands:
+                if (change not in game_doc['state'][country]['armies']+game_doc['state'][country]['fleets'] and change in game_doc['state'][country]['controls']):
+                    game_doc['state'][country]['controls'].remove(change)
+
     return game_doc
 
 # returns (dict, dict) that is (retreats required (player -> array of retreats), units destroyed (player -> array of destroyed))
@@ -338,7 +354,7 @@ def retreat_needed(retreats, game_doc):
         unit=retreat['unit_type']
         fromloc=retreat['location']
         available=gv.game_map['adjacency'][fromloc]
-        available.remove(retreat['attack_loc'])
+        available.remove(retreat['attacked_loc'])
         country=retreat['owner']
 
         player_position=list(players.values()).index(country)
@@ -366,7 +382,7 @@ def retreat_needed(retreats, game_doc):
             except:
                 game_doc['required_retreats'][country]=[(fromloc,available)]
                 retreats_req[player]=[fromloc]
-
+    gm.update_game(game_doc)
     return (retreats_req, units_destroyed)
 
 # no return
@@ -463,7 +479,14 @@ def execute_turn(game_name):
         print(f'It is winter, checking {game_doc}')
         (winners, players)=check_wincons(game_doc)
         if (winners == []):
-            return ('SUPPLY', start_supply(game_doc))
+            supp=start_supply(game_doc)
+            if (supp != ([],[])):
+                return ('SUPPLY', supp)
+            else:
+                game_doc['year']=game_doc['year']+1
+                game_doc['season']='spring'
+                gm.update_game(game_doc)
+                return ('TURN END',[])
         else:
             return ('GAME END',(winners,players))
     else:
