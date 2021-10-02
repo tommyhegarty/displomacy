@@ -14,8 +14,10 @@ from datetime import datetime, timedelta
 def fail_retreats(name):
     doc = gm.get_game(name)
     retreats = doc['required_retreats']
+    print(f'Retreats are {retreats}')
     for country in retreats.keys():
         country_retreats = retreats[country]
+        print(f'Retreats for {country} are {country_retreats}')
         print(country_retreats)
         while country_retreats:
             (fromloc,available) = country_retreats.pop(0)
@@ -324,12 +326,21 @@ def update_map(orders, season, game_doc):
 
             game_doc['state'][to_update][unit].remove(move_from)
             game_doc['state'][to_update][unit].append(move_to)
-            if (season == 'fall' and move_to in gv.game_map['SUPPLY']):
-                for country in gv.countries:
-                    if(move_to in game_doc['state'][country]['controls']):
-                        game_doc['state'][country]['controls'].remove(move_to)
-                game_doc['state'][to_update]['controls'].append(move_to)
+            
     game_doc['season']=season
+
+    if (season == 'fall' and move_to in gv.game_map['SUPPLY']):
+        changed_hands=[]
+        for supp_center in gv.game_map['SUPPLY']:
+            for country in gv.countries:
+                if (supp_center in game_doc['state'][country]['armies']+game_doc['state'][country]['fleets'] and supp_center not in game_doc['state'][country]['controls']):
+                    game_doc['state'][country]['controls'].append(supp_center)
+                    changed_hands.append(supp_center)
+        for country in gv.countries:
+            for change in changed_hands:
+                if (change not in game_doc['state'][country]['armies']+game_doc['state'][country]['fleets'] and change in game_doc['state'][country]['controls']):
+                    game_doc['state'][country]['controls'].remove(change)
+
     return game_doc
 
 # returns (dict, dict) that is (retreats required (player -> array of retreats), units destroyed (player -> array of destroyed))
@@ -371,7 +382,7 @@ def retreat_needed(retreats, game_doc):
             except:
                 game_doc['required_retreats'][country]=[(fromloc,available)]
                 retreats_req[player]=[fromloc]
-
+    gm.update_game(game_doc)
     return (retreats_req, units_destroyed)
 
 # no return

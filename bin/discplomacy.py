@@ -21,13 +21,14 @@ bot=commands.Bot(command_prefix=prefix, intents=intents)
 
 @tasks.loop(minutes=1.0)
 async def check_next_turns():
-    print('Checking...')
     now = datetime.now()
     next_turns=manage_games.get_next_turns()
     for (game,turn) in next_turns:
         turn=datetime.strptime(turn,'%Y-%m-%d %H:%M:%S.%f')
         if turn < now:
+            print('Checking ... ')
             doc=manage_games.get_game(game)
+            print(doc)
             retr=doc['required_retreats']
             seas=doc['season']
             if (retr != {}):
@@ -36,11 +37,13 @@ async def check_next_turns():
                 doc=manage_games.get_game(game)
                 await notify_retreat_complete(doc)
             if (seas == 'winter'):
+                print('Its winter, failing supplies')
                 run_game.fail_supplies(game)
                 doc=manage_games.get_game(game)
                 await notify_supply_complete(doc)
                 break
             if (retr == {} and seas != 'winter'):
+                print('Running full turn')
                 await run_full_turn(game)
 
 @bot.event
@@ -267,11 +270,13 @@ async def run_full_turn(name):
         (retreats_required,units_destroyed)=result_tuple
         await notify_retreats_required(retreats_required,name)
         await notify_unit_destroyed(units_destroyed,name)
+        await notify_retreat_phase(name)
         players=manage_games.get_game(name)['currently_playing'].keys()
     elif (result == 'SUPPLY'):
         (positive_supply, negative_supply)=result_tuple
         await notify_reinforcements(positive_supply,name)
         await notify_disbandment(negative_supply,name)
+        await notify_supply_phase(name)
         players=manage_games.get_game(name)['currently_playing'].keys()
     elif (result == 'GAME END'):
         (winners, players)=result_tuple
@@ -326,6 +331,16 @@ async def send_private_message(player,game_name,message,include_gamestate):
     except Exception as inst:
         print(inst)
 
+async def notify_retreat_phase(name):
+    doc = manage_games.get_game(name)
+    for player in doc['currently_playing'].keys():
+        await send_private_message(player, name, 'Turn over, retreat phase started.',True)
+
+async def notify_supply_phase(name):
+    doc = manage_games.get_game(name)
+    for player in doc['currently_playing'].keys():
+        await send_private_message(player, name, 'Turn over, retreat phase started.',True)
+
 async def notify_new_phase(game_doc):
     print('here is where we notify a new phase')
 
@@ -348,22 +363,22 @@ async def notify_retreat_complete(game_doc):
 async def notify_reinforcements(positive_supply,name):
     for player in positive_supply.keys():
         supply = positive_supply[player]
-        await send_private_message(player,name,f'You can resupply your forces up to {supply}. Use the ?supply add command, remembering that the only valid supply locations are unoccupied supply centers you began the game with.', True)
+        await send_private_message(player,name,f'You can resupply your forces up to {supply}. Use the ?supply add command, remembering that the only valid supply locations are unoccupied supply centers you began the game with.', False)
 
 async def notify_disbandment(negative_supply,name):
     for player in negative_supply.keys():
         supply = negative_supply[player]
-        await send_private_message(player,name,f'You must disband your forces up to {supply}. Use the ?supply remove command.', True)
+        await send_private_message(player,name,f'You must disband your forces up to {supply}. Use the ?supply remove command.', False)
 
 async def notify_retreats_required(retreats,name):
     for player in retreats.keys():
         locations = retreats[player]
-        await send_private_message(player, name,f'The turn has executed and you are forced to retreat from the following locations: {locations}', True)
+        await send_private_message(player, name,f'The turn has executed and you are forced to retreat from the following locations: {locations}', False)
 
 async def notify_unit_destroyed(units_destroyed, name):
     for player in units_destroyed:
         locations = units_destroyed[player]
-        await send_private_message(player,name,f'Your units at {locations} was defeated and had nowhere to retreat, so were destroyed.', True)
+        await send_private_message(player,name,f'Your units at {locations} was defeated and had nowhere to retreat, so were destroyed.', False)
 
 async def notify_game_start(game_doc):
     players=game_doc['currently_playing']
