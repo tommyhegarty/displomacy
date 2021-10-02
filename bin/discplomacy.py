@@ -421,6 +421,6 @@ async def notify_turn_over(players, name):
     for player in players:
         await send_private_message(player, name, f'{name} has finished the season.', True)
 
-timetogo=datetime.now()+timedelta(minutes=1)
-manage_games.update_next_turn('game',str(timetogo))
+#timetogo=datetime.now()+timedelta(minutes=1)
+#manage_games.update_next_turn('game',str(timetogo))
 bot.run(TOKEN)
