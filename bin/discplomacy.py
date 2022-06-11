@@ -88,9 +88,13 @@ async def new(ctx):
         name = split[2]
         turn_duration=split[3]
         try:
+            print(f'working with message {split}')
             manage_lobby.create_lobby(name, turn_duration, datetime.now())
+            print(f'created lobby')
             send_message=await send_lobby_start(ctx.message.channel, name)
+            print(f'sent a message')
             manage_lobby.add_message_id(name, str(send_message.id))
+            print(f'added message id or something? not sure what this is')
         except:
             await ctx.message.channel.send("A lobby of that name already exists.")
         
