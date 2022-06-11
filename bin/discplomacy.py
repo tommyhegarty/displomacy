@@ -13,6 +13,7 @@ import run_tests
 import PIL
 from maps import draw_map
 import io
+import unify_dbs
 
 intents = discord.Intents().all()
 TOKEN=cfg.token
@@ -425,4 +426,5 @@ async def notify_turn_over(players, name):
     for player in players:
         await send_private_message(player, name, f'{name} has finished the season.', True)
 
+unify_dbs.setup()
 bot.run(TOKEN)
