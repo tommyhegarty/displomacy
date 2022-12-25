@@ -10,7 +10,6 @@ import run_game
 import shlex
 from games import manage_lobby, game_vars, manage_games
 import run_tests
-import PIL
 from maps import draw_map
 import io
 import unify_dbs
