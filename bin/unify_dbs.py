@@ -1,6 +1,6 @@
 import psycopg2
 import os
-DATABASE_URL = os.environ['DATABASE_URL']
+DATABASE_URL = "postgresql://discbot:discbotpass@localhost:5432/discplomacy"
 
 def setup():
     ## create lobby db
