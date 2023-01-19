@@ -1,17 +1,14 @@
 template={
     "year":1901,
     "season":"spring",
+    "retreating": False,
     "name":"sample",
     "turn_duration":"12 hours",
-    "currently_playing":{
-        "player1":"AUS",
-        "player2":"ENG",
-        "player3":"FRA",
-        "player4":"GER",
-        "player5":"ITA",
-        "player6":"RUS",
-        "player7":"TUR"
-    },
+    "next_turn":"",
+    "channel": "",
+    "started": False,
+    "players": [],
+    "currently_playing":{},
     "state":{
         "AUS":{
             "original":["VIE","BUD","TRI"],
@@ -70,23 +67,16 @@ template={
             "surrendered":False
         }
     },
-    "last_orders":{
-        "AUS":[],
-        "ENG":[],
-        "FRA":[],
-        "GER":[],
-        "ITA":[],
-        "RUS":[],
-        "TUR":[]
-    },
-    "next_orders":{
-        "AUS":[],
-        "ENG":[],
-        "FRA":[],
-        "GER":[],
-        "ITA":[],
-        "RUS":[],
-        "TUR":[]
+    "last_orders":[],
+    "next_orders":[],
+    "locked": {
+        "AUS":False,
+        "ENG":False,
+        "FRA":False,
+        "GER":False,
+        "ITA":False,
+        "RUS":False,
+        "TUR":False
     },
     "required_retreats":{},
     "required_supply":{}

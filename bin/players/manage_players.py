@@ -1,73 +1,52 @@
-import psycopg2
+import json
 import os
-DATABASE_URL = "postgresql://discbot:discbotpass@localhost:5432/discplomacy"
 
-def add_player(discord_id):
+data_dir = os.environ['DATA_DIR']+'/players'
 
-    connection=psycopg2.connect(DATABASE_URL)
-    db=connection.cursor()
+def register_player(user):
+    if os.path.exists(f'{data_dir}/{user}.json'):
+        return False
+    else:
+        data = {
+            "discord_id": user,
+            "current_games": [],
+            "current_lobbies": [],
+            "completed_games": []
+        }
+        file = open(f'{data_dir}/{user}.json', 'w')
+        file.write(json.dumps(data))
+        file.close()
+        return True
 
-    db.execute("""
-    SELECT * FROM players WHERE id = %s;
-    """,
-    [discord_id])
-    duplicates=db.fetchone()
-    if (duplicates != ''):
-        raise NameError("Duplicate id, this player already exists")
+def join_lobby(user, name, channel):
+    if not os.path.exists(f'{data_dir}/{user}.json'):
+        return False
+    else:
+        file = open(f'{data_dir}/{user}.json', 'r')
+        data = json.load(file)
+        file.close()
 
-    db.execute("""
-    INSERT INTO players (id, current_games, finished_games) VALUES (%s, %s, %s)
-    """,
-    [discord_id,[],[]])
+        data['current_lobbies'].append({'name': name, 'channel': channel})
 
-    connection.commit()
-    connection.close()
+        file = open(f'{data_dir}/{user}.json', 'w')
+        file.write(json.dumps(data))
+        file.close()
+        return True
 
-def add_game(discord_id, name):
-    try:
-        add_player(discord_id)
-        print(f"Added {discord_id} to the database")
-    except NameError:
-        print("Player already exists, adding to existing.")
+def leave_lobby(user, name, channel):
+    if not os.path.exists(f'{data_dir}/{user}.json'):
+        return False
+    else:
+        file = open(f'{data_dir}/{user}.json', 'r')
+        data = json.load(file)
+        file.close()
 
-    connection=psycopg2.connect(DATABASE_URL)
-    db=connection.cursor()
+        obj = {'name': name, 'channel': channel}
+        if obj not in data['current_lobbies']:
+            return False
+        data['current_lobbies'].remove(obj)
 
-    db.execute("""
-    UPDATE players SET current_games = array_append(current_games, %s) WHERE id = %s
-    """,
-    [name,discord_id])
-    connection.commit()
-    connection.close()
-
-def get_games(discord_id):
-
-    connection=psycopg2.connect(DATABASE_URL)
-    db=connection.cursor()
-
-    db.execute("""
-    SELECT (current_games) FROM players WHERE id = %s;
-    """,
-    [discord_id])
-    current_games=db.fetchone()
-
-    connection.close()
-
-    return current_games
-
-def end_game(discord_id,name):
-    try:
-        add_player(discord_id)
-        print(f"Added {discord_id} to the database")
-    except NameError:
-        print("Player already exists, adding to existing.")
-
-    connection=psycopg2.connect(DATABASE_URL)
-    db=connection.cursor()
-
-    db.execute("""
-    UPDATE players SET current_games = array_remove(current_games, %s) WHERE id = %s 
-    """,
-    [name, discord_id])
-    connection.commit()
-    connection.close()
+        file = open(f'{data_dir}/{user}.json', 'w')
+        file.write(json.dumps(data))
+        file.close()
+        return True

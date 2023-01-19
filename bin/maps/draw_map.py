@@ -7,7 +7,7 @@ import math
 def draw_hold(draw, order, color):
     location_todraw=order['new']
     (x,y)=map_cfg.unit_locations[location_todraw]
-    draw.ellipse([(x-12,y-12),(x+12,y+12)], outline='black')
+    draw.ellipse([(x-12,y-12),(x+12,y+12)], outline=color)
     return draw
 
 def draw_move(draw, order, color):
@@ -45,23 +45,22 @@ def draw_sup(draw, order, color):
 def draw_con(draw, order, color):
     return draw
 
-def draw_orders(draw, game_doc):
+def draw_orders(draw, game_doc, country):
     orders=game_doc['next_orders']
     
     if (all(value == [] for value in orders.values())):
         return draw
     else:
-        for country in orders.keys():
-            all_orders = orders[country]
-            color = map_cfg.color_countries[country]
-            for order in all_orders:
-                switcher={
-                    'HOL':draw_hold,
-                    'MOV':draw_move,
-                    'SUP':draw_sup,
-                    'CON':draw_con
-                }
-                draw=switcher[order['command']](draw, order, color)
+        all_orders = orders[country]
+        color = map_cfg.color_countries[country]
+        for order in all_orders:
+            switcher={
+                'HOL':draw_hold,
+                'MOV':draw_move,
+                'SUP':draw_sup,
+                'CON':draw_con
+            }
+            draw=switcher[order['command']](draw, order, color)
     return draw
 
 def draw_supply(draw, game_doc):
@@ -89,10 +88,17 @@ def draw_units(draw, game_doc):
             draw.polygon([(x-8,y-8),(x,y+8),(x+8,y-8)],fill=color,outline='black')
     return draw
 
-def draw_map_from_state(game_doc):
+def draw_public_map_from_state(game_doc):
     map_basic=Image.open('bin/maps/map_with_text.png').convert('RGBA')
     draw=ImageDraw.Draw(map_basic,'RGBA')
     draw=draw_supply(draw, game_doc)
     draw=draw_units(draw, game_doc)
-    draw=draw_orders(draw, game_doc)
+    return map_basic
+
+def draw_private_map_from_state(game_doc, player):
+    map_basic=Image.open('bin/maps/map_with_text.png').convert('RGBA')
+    draw=ImageDraw.Draw(map_basic,'RGBA')
+    draw=draw_supply(draw, game_doc)
+    draw=draw_units(draw, game_doc)
+    draw=draw_orders(draw, game_doc, game_doc['currently_playing'][player])
     return map_basic
