@@ -194,3 +194,6 @@ def surrender(name, channel, player):
     finally:
         lock.release()
         return gamedoc
+
+def get_all_ready_games():
+    print('nothin')
