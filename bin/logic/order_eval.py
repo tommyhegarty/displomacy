@@ -1,4 +1,5 @@
 from . import game_vars as gv
+from . import adjudicator
 
 def valid_order(gamedoc, player, order, fromloc, toloc, targetloc, unit):
     country = gamedoc['state'][player]
@@ -47,3 +48,7 @@ def evaluate_orders(gamedoc):
 
     # fucking hell
     order_queue = gamedoc['next_orders']
+    adj = adjudicator.Adjudicator()
+    results = adj.execute_orders(order_queue)
+
+    # now we analyze the results and dictate what occurs based on pass and failure

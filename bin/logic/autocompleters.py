@@ -25,13 +25,24 @@ async def autocomp_unit_locations(inter: disnake.ApplicationCommandInteraction, 
         except:
             return []
 
-async def autocomp_unit_moves(inter: disnake.ApplicationCommandInteraction, user_input: str):
+async def autocomp_unit_adjacent(inter: disnake.ApplicationCommandInteraction, user_input: str):
     ufrom = inter.options['unit_location']
     if ufrom == '':
         return []
     else:
         try:
             moveto = gv.game_map['adjacency'][ufrom]
+            return [loc for loc in moveto if user_input.upper() in moveto or user_input == ""]
+        except:
+            return []
+
+async def autocomp_unit_supports(inter: disnake.ApplicationCommandInteraction, user_input: str):
+    uto = inter.options['supporting_to']
+    if uto == '':
+        return []
+    else:
+        try:
+            moveto = gv.game_map['adjacency'][uto].append(uto)
             return [loc for loc in moveto if user_input.upper() in moveto or user_input == ""]
         except:
             return []

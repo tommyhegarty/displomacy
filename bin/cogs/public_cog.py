@@ -1,17 +1,8 @@
-import os
-import json
 import disnake
 from disnake.ext import commands
-from . import manage_games as mg
-from players import manage_players as mp
+from games import manage_games as mg
 from . import message_util as mu
-
-async def autocomp_waiting_games(inter: disnake.ApplicationCommandInteraction, user_input: str):
-    return [lang for lang in mg.get_all_waiting_games(inter.channel_id) if user_input.lower() in lang or user_input.lower() == ""]
-async def autocomp_ongoing_games(inter: disnake.ApplicationCommandInteraction, user_input: str):
-    return [lang for lang in mg.get_all_started_games(inter.channel_id) if user_input.lower() in lang or user_input.lower() == ""]
-async def autocomp_all_games(inter: disnake.ApplicationCommandInteraction, user_input: str):
-    return [lang for lang in mg.get_all_waiting_games(inter.channel_id) + mg.get_all_started_games(inter.channel_id) if user_input.lower() in lang or user_input.lower() == ""]
+from logic import autocompleters as auto
 
 class public_cog(commands.Cog):
 
@@ -43,7 +34,7 @@ class public_cog(commands.Cog):
     @commands.slash_command(dm_permission=False)
     async def view(
         inter: disnake.ApplicationCommandInteraction,
-        name: str = commands.Param(autocomplete=autocomp_all_games)
+        name: str = commands.Param(autocomplete=auto.autocomp_all_games)
     ):
         channel = inter.channel_id
         user = inter.author.id
@@ -64,12 +55,12 @@ class public_cog(commands.Cog):
         '''
         See all the existing (started and waiting) games in this channel.
         '''
-        await inter.send(await autocomp_all_games(inter,""))
+        await inter.send(await auto.autocomp_all_games(inter,""))
 
     @commands.slash_command(dm_permission=False)
     async def join(
         inter: disnake.ApplicationCommandInteraction,
-        name: str = commands.Param(autocomplete=autocomp_waiting_games)
+        name: str = commands.Param(autocomplete=auto.autocomp_waiting_games)
     ):
         '''
         Join a lobby in this channel to play Diplomacy!
@@ -92,7 +83,7 @@ class public_cog(commands.Cog):
     @commands.slash_command(dm_permission=False)
     async def leave(
         inter: disnake.ApplicationCommandInteraction,
-        name: str = commands.Param(autocomplete=autocomp_waiting_games)
+        name: str = commands.Param(autocomplete=auto.autocomp_waiting_games)
     ):
         '''
         Leave a game you're currently in before the game starts.
@@ -118,7 +109,7 @@ class public_cog(commands.Cog):
     @commands.slash_command(dm_permission=False)
     async def surrender(
         inter: disnake.ApplicationCommandInteraction,
-        name: str = commands.Param(autocomplete=autocomp_ongoing_games)
+        name: str = commands.Param(autocomplete=auto.autocomp_ongoing_games)
     ):
         '''
         Admit defeat in an ongoing game. This must be done publicly!
