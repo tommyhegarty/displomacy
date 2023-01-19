@@ -6,7 +6,7 @@
 #   country: the country of the order,
 #   type: the type of unit in the order
 # }
-import game_vars as gv
+from . import game_vars as gv
 
 class Adjudicator():
     resolved=[]

@@ -5,13 +5,14 @@ import cfg
 import disnake
 from disnake.ext import commands, tasks
 
+os.environ['DATA_DIR'] = os.getcwd()+"/data"
+
 from games import manage_games as mg
 from cogs.public_cog import public_cog
 from cogs.orders_cog import orders_cog
 
-os.environ['dbstring'] = cfg.dbstring
 TOKEN=cfg.token
-
+prefix="/"
 intents = disnake.Intents.default()
 intents.typing = False
 intents.presences = False

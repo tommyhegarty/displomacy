@@ -1,1 +1,0 @@
-# init a cogs package
