@@ -1,14 +1,20 @@
 template={
+    "_id": {
+        "name": 'sample',
+        "channel": ''
+    },
+    "name": 'sample',
+    "channel": '',
     "year":1901,
     "season":"spring",
     "retreating": False,
-    "name":"sample",
+    "supplying": False,
     "turn_duration":"12 hours",
     "next_turn":"",
-    "channel": "",
     "started": False,
     "players": [],
     "currently_playing":{},
+    "defeated": {},
     "state":{
         "AUS":{
             "original":["VIE","BUD","TRI"],
@@ -16,7 +22,8 @@ template={
             "armies":["VIE","BUD"],
             "fleets":["TRI"],
             "wincon":1,
-            "surrendered":False
+            "surrendered":False,
+            "supply": 3
         },
         "ENG":{
             "original":["EDI","LVP","LON"],
@@ -24,7 +31,8 @@ template={
             "armies":["LVP"],
             "fleets":["EDI","LON"],
             "wincon":1,
-            "surrendered":False
+            "surrendered":False,
+            "supply": 3
         },
         "FRA":{
             "original":["BRE","PAR","MAR"],
@@ -32,7 +40,8 @@ template={
             "armies":["PAR","MAR"],
             "fleets":["BRE"],
             "wincon":1,
-            "surrendered":False
+            "surrendered":False,
+            "supply": 3
         },
         "GER":{
             "original":["BER","KIE","MUN"],
@@ -40,7 +49,8 @@ template={
             "armies":["BER","MUN"],
             "fleets":["KIE"],
             "wincon":1,
-            "surrendered":False
+            "surrendered":False,
+            "supply": 3
         },
         "ITA":{
             "original":["VEN","ROM","NAP"],
@@ -48,7 +58,8 @@ template={
             "armies":["ROM","VEN"],
             "fleets":["NAP"],
             "wincon":1,
-            "surrendered":False
+            "surrendered":False,
+            "supply": 3
         },
         "RUS":{
             "original":["STP","MOS","WAR","SEV"],
@@ -56,7 +67,8 @@ template={
             "armies":["MOS","WAR"],
             "fleets":["STP","SEV"],
             "wincon":1,
-            "surrendered":False
+            "surrendered":False,
+            "supply": 4
         },
         "TUR":{
             "original":["CON","ANK","SMY"],
@@ -64,7 +76,8 @@ template={
             "armies":["CON","SMY"],
             "fleets":["ANK"],
             "wincon":1,
-            "surrendered":False
+            "surrendered":False,
+            "supply": 3
         }
     },
     "last_orders":[],
@@ -78,8 +91,8 @@ template={
         "RUS":False,
         "TUR":False
     },
-    "required_retreats":{},
-    "required_supply":{}
+    "retreats":[],
+    "supply":[]
 }
 game_map={
     "LAND":["ALB","ANK","APU","ARM","BEL","BER","BOH","BRE","BUD","BUL","BUR","CLY","CON","DEN","EDI","FIN","GAL","GAS","GRE","HOL","KIE","LON","LVN","LVP","MAR","MOS","MUN","NAF","NAP","NWY","PAR","PIC","PIE","POR","PRU","ROM","RUH","RUM","SER","SEV","SIL","SMY","SPA","STP","SWE","SYR","TRI","TUN","TUS","TYR","UKR","VEN","VIE","WAL","WAR","YOR"],

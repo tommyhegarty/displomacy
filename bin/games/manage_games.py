@@ -3,80 +3,70 @@ import os
 import glob
 import random
 import datetime
+from dbs import games_db as gdb
 from logic import game_vars as gv
-from filelock import FileLock as fl
-
-data_dir = os.environ['DATA_DIR']+'/games'
 
 def get_all_waiting_games(channel):
-    names = []
-    for roots, dirs, files in os.walk(data_dir):
-        for ff in files:
-            if str(channel) in ff:
-                name = ff.split('-')[1]
-                if 'waiting' in ff.split('-')[2]:
-                    names.append(name)
-    return names
+    gamedocs = gdb.search_games({'channel': channel, 'started': True})
+    return [g['name'] for g in gamedocs if not gamedocs['started']]
 
 def get_all_started_games(channel):
-    names = []
-    for roots, dirs, files in os.walk(data_dir):
-        for ff in files:
-            if str(channel) in ff:
-                name = ff.split('-')[1]
-                if 'waiting' not in ff.split('-')[2]:
-                    names.append(name)
-    return names
+    gamedocs = gdb.search_games({'channel': channel, 'started': True})
+    return [g['name'] for g in gamedocs if gamedocs['started']]
 
 def get_ongoing_game(name, channel):
-    if len(glob.glob(f'{data_dir}/{channel}-{name}-*.json')) == 0:
-        raise Exception('There is no game of that name in this channel.')
-    elif len(glob.glob(f'{data_dir}/{channel}-{name}-waiting.json')) == len(glob.glob(f'{data_dir}/{channel}-{name}-*.json')) and len(glob.glob(f'{data_dir}/{channel}-{name}-*.json')) != 0:
-        raise Exception('There is no ongoing game of that name in this channel.')
+    try:
+        gamedoc = gdb.get_game(name, channel)
+    except Exception as e:
+        raise e
     else:
-        file = open(glob.glob(f'{data_dir}/{channel}-{name}-*.json')[0],'r')
-        dict = json.load(file)
-        file.close()
+        if gamedoc['started']:
+            return gamedoc
+        else:
+            raise Exception('The game of that name is not yet started!')
 
-        return dict
+def get_waiting_game(name, channel):
+    try:
+        gamedoc = gdb.get_game(name, channel)
+    except Exception as e:
+        raise e
+    else:
+        if not gamedoc['started']:
+            return gamedoc
+        else:
+            raise Exception('The game of that name is already started!')
 
 def get_game(name, channel):
-    if len(glob.glob(f'{data_dir}/{channel}-{name}-*.json')) == 0:
-        raise Exception('There is no game of that name in this channel.')
-    else:
-        file = open(glob.glob(f'{data_dir}/{channel}-{name}-*.json')[0],'r')
-        dict = json.load(file)
-        file.close()
-
-        return dict
+    return gdb.get_game(name, channel)
 
 def new_game(name, player, duration, channel):
 
     if not name.isalnum():
         raise Exception("Invalid characters used in game name. Only alphanumeric characters allowed, with no spaces!")
     
-    if len(glob.glob(f'{data_dir}/{channel}-{name}-*.json')) != 0:
+    if get_game(name, channel) != None:
         raise Exception("A game of this name already exists in this channel.")
 
     gamedoc = gv.template.copy()
+    gamedoc['_id'] = {
+        'name': name,
+        'channel': channel
+    }
     gamedoc['turn_duration'] = duration
     gamedoc['name'] = name
     gamedoc['channel'] = channel
     gamedoc['players'] = [player]
 
-    filename = f'{channel}-{name}-waiting.json'
-    file = open(f'{data_dir}/{filename}', 'w')
-    file.write(json.dumps(gamedoc))
-    file.close()
+    result = gdb.add_game(gamedoc)
 
-    return gamedoc
+    if result == gamedoc:
+        return gamedoc
+    else:
+        raise Exception('Something other than the game state was added to the db! What a horrible tragedy.')
 
 def start_game(name, channel):
 
-    if len(glob.glob(f'{data_dir}/{channel}-{name}-waiting.json')) == 0:
-        raise Exception("A non-started game of this name doesn't exist in this channel.")
-
-    gamedoc = get_game(name,channel)
+    gamedoc = get_waiting_game(name, channel)
     duration = gamedoc['turn_duration']
     players = gamedoc['players']
 
@@ -99,17 +89,14 @@ def start_game(name, channel):
             break
     
     gamedoc['currently_playing'] = playing.copy()
-    gamedoc['next_turn'] = next_turn.isoformat()
+    gamedoc['next_turn'] = next_turn
     gamedoc['started'] = True
     
-    filename = f'{channel}-{name}-{next_turn.isoformat()}.json'
-    os.rename(f'{data_dir}/{channel}-{name}-waiting.json',f'{data_dir}/{filename}')
-
-    file = open(f'{data_dir}/{filename}', 'w')
-    file.write(json.dumps(gamedoc))
-    file.close()
-    
-    return gamedoc
+    result = gdb.update_game(gamedoc)
+    if result == gamedoc:
+        return gamedoc
+    else:
+        raise Exception(f'The modification does not match the updated state. Something is wrong!')
 
 def join_game(name, channel, player):
     gamedoc = get_game(name, channel)
@@ -119,19 +106,13 @@ def join_game(name, channel, player):
     elif player in gamedoc['players']:
         raise Exception('You\'ve already joined this game.')
 
-    filename = f'{channel}-{name}-waiting.json'
-
-    lock = fl(filename)
-    lock.acquire()
-
-    try:    
-        gamedoc['players'].append(player)
-
-        file = open(f'{data_dir}/{filename}', 'w')
-        file.write(json.dumps(gamedoc))
-        file.close()
-    finally:
+    
+    gamedoc['players'].append(player)
+    result = gdb.update_game(gamedoc)
+    if result == gamedoc:
         return gamedoc
+    else:
+        raise Exception(f'The modification does not match the updated state. Something is wrong!')
 
 def leave_game(name, channel, player):
     gamedoc = get_game(name, channel)
@@ -141,59 +122,56 @@ def leave_game(name, channel, player):
     elif player not in gamedoc['players']:
         raise Exception('You\'re not in this game. You cannot leave a game you have not joined.')
 
-    filename = f'{channel}-{name}-waiting.json'
-
-    lock = fl(filename)
-    lock.acquire()
-
-    try:
-        gamedoc['players'].remove(player)
-        file = open(f'{data_dir}/{filename}', 'w')
-        file.write(json.dumps(gamedoc))
-        file.close()
-
-        if len(gamedoc['players']) == 0:
-            delete_game(name, channel)
-    finally:
-        lock.release()
-        return gamedoc
-
-def delete_game(name, channel):
-    filename = glob.glob(f'{data_dir}/{channel}-{name}-*.json')[0]
-    try:
-        os.remove(f'{filename}')
-    except Exception as e:
-        raise e
+    if len(gamedoc['players']) == 1:
+        result = gdb.delete_game(name, channel)
+        if result == gamedoc:
+            return None
+        else:
+            raise Exception(f'Something has been deleted that is NOT the game! Not ideal.')
+    else:
+        result = gdb.update_game(gamedoc)
+        if result == gamedoc:
+            return gamedoc
+        else:
+            raise Exception(f'The modification does not match the updated state. Something is wrong!')
 
 def surrender(name, channel, player):
     gamedoc = get_game(name, channel)
     
-    next_turn = gamedoc['next_turn']
-    filename = f'{channel}-{name}-{next_turn}.json'
-
     if not gamedoc['started']:
         raise Exception('That game hasn\'t started yet. You can only surrender in-progress games.')
     elif player not in gamedoc['players']:
         raise Exception('You cannot surrender a game you are not in.')
 
-    lock = fl(filename)
-    lock.acquire()
+    
+    country = gamedoc['currently_playing'][player]
+    gamedoc['state'][country]['surrendered'] = True
+    gamedoc['state'][country]['controls'] = []
+    gamedoc['state'][country]['armies'] = []
+    gamedoc['state'][country]['navies'] = []
+    gamedoc['next_orders'][country] = []
+    gamedoc['currently_playing'].remove(player)
 
-    try:
-        country = gamedoc['currently_playing'][player]
-        gamedoc['state'][country]['surrendered'] = True
-        gamedoc['state'][country]['controls'] = []
-        gamedoc['state'][country]['armies'] = []
-        gamedoc['state'][country]['navies'] = []
-        gamedoc['next_orders'][country] = []
-        gamedoc['currently_playing'].remove(player)
-
-        file = open(f'{data_dir}/{filename}', 'w')
-        file.write(json.dumps(gamedoc))
-        file.close()
-    finally:
-        lock.release()
+    result = gdb.update_game(gamedoc)
+    if result == gamedoc:
         return gamedoc
+    else:
+        raise Exception(f'The modification does not match the updated state. Something is wrong!')
 
 def get_all_ready_games():
-    print('nothin')
+    now = datetime.datetime.now()
+    time_up = gdb.search_games({'next_turn': {"$lte": now}})
+    all_locked = gdb.search_games({'locked': {
+        "AUS":True,
+        "ENG":True,
+        "FRA":True,
+        "GER":True,
+        "ITA":True,
+        "RUS":True,
+        "TUR":True
+    }})
+    done_retreating = gdb.search_games({'retreating': True, 'retreats': []})
+    done_supplying = gdb.search_games({'supplying': True, 'supply': []})
+    deduped = list(dict.fromkeys(time_up+all_locked+done_retreating+done_supplying))
+
+    return deduped

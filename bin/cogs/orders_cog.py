@@ -163,3 +163,47 @@ class orders_cog(commands.Cog):
         else:
             (embed, file) = mu.build_game_message(gamedoc, user)
             await inter.send(embed=embed, file=file, ephemeral=True)
+    
+    @commands.slash_command()
+    async def retreat(
+        inter: disnake.ApplicationCommandInteraction,
+        name: str = commands.Param(autocomplete=auto.autocomp_user_games),
+        channel: str = commands.Param(autocomplete=auto.autocomp_channel_per_game),
+        from_location: str = commands.Param(autocomplete=auto.autocomp_retreat_locations),
+        to_retreat: str = commands.Param(autocomplete=auto.autocomp_retreat_possibilities)
+    ):
+        user = inter.author.id
+
+        try:
+            gamedoc = mo.retreat(name, channel, user, from_location, to_retreat)
+        except Exception as e:
+            embed = mu.build_error_message(e)
+            await inter.send(embed=embed, ephemeral=True, delete_after=120)
+        else:
+            (embed, file) = mu.build_game_message(gamedoc, user)
+            await inter.send(embed=embed, file=file, ephemeral=True)
+    
+    @commands.slash_command()
+    async def supply(
+        inter: disnake.ApplicationCommandInteraction,
+        name: str = commands.Param(autocomplete=auto.autocomp_user_games),
+        channel: str = commands.Param(autocomplete=auto.autocomp_channel_per_game),
+        add_or_remove: str = commands.Param(choices=['ADD','REMOVE']),
+        location: str = commands.Param(autocomplete=auto.autocomp_control_locations),
+        unit: str = commands.Param(choices=['A','F'])
+    ):
+        if add_or_remove == 'ADD':
+            remove = False
+        else:
+            remove = True
+
+        user = inter.author.id
+
+        try:
+            gamedoc = mo.supply(name, channel, user, location, remove, unit)
+        except Exception as e:
+            embed = mu.build_error_message(e)
+            await inter.send(embed=embed, ephemeral=True, delete_after=120)
+        else:
+            (embed, file) = mu.build_game_message(gamedoc, user)
+            await inter.send(embed=embed, file=file, ephemeral=True)
