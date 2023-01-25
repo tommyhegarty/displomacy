@@ -21,7 +21,7 @@ class public_cog(commands.Cog):
         duration: The duration of the game's turns. Options are 20 minutes, 1 hour, and 1 day.
         '''
         channel = inter.channel_id
-        user = inter.author.id
+        user = str(inter.author.id)
         try:
             gamedoc = mg.new_game(name, user, duration, channel)
         except Exception as e:
@@ -37,7 +37,7 @@ class public_cog(commands.Cog):
         name: str = commands.Param(autocomplete=auto.autocomp_all_games)
     ):
         channel = inter.channel_id
-        user = inter.author.id
+        user = str(inter.author.id)
 
         try:
             gamedoc = mg.get_game(name, channel)
@@ -70,7 +70,7 @@ class public_cog(commands.Cog):
         name: The name of the game you're joining.
         '''
         channel = inter.channel_id
-        user = inter.author.id
+        user = str(inter.author.id)
         try:
             gamedoc = mg.join_game(name, channel, user)
         except Exception as e:
@@ -93,19 +93,43 @@ class public_cog(commands.Cog):
         name: The name of the unstarted game you're leaving
         '''
         channel = inter.channel_id
-        user = inter.author.id
+        user = str(inter.author.id)
         try:
             gamedoc = mg.leave_game(name, channel, user)
         except Exception as e:
             embed = mu.build_error_message(e)
             await inter.send(embed= embed, ephemeral=True, delete_after=120)
         else:
-            if len(gamedoc['players']) == 0:
-                await inter.send(f'<@{user}> has left the game {name}, leaving no players in the lobby. The game has been deleted.')
+            if gamedoc == None:
+                await inter.send(f'<@{user}> has left the game ***{name}***, leaving no players in the lobby. The game has been deleted.')
             else:
                 (embed, file) = mu.build_game_message(gamedoc)
                 await inter.send(f'<@{user}> has left the game.', embed=embed, file=file)
 
+    @commands.slash_command(dm_permission=False)
+    async def start(
+        inter: disnake.ApplicationCommandInteraction,
+        name: str = commands.Param(autocomplete=auto.autocomp_waiting_games),
+    ):
+        '''
+        Start a game when all players have joined!
+
+        Parameters
+        ----------
+        name: The name of the game you're starting. Unique, alphanumeric, no spaces, 25 chars or less.
+        duration: The duration of the game's turns. Options are 20 minutes, 1 hour, and 1 day.
+        '''
+        channel = inter.channel_id
+        user = str(inter.author.id)
+        try:
+            gamedoc = mg.start_game(name, channel, user)
+        except Exception as e:
+            embed = mu.build_error_message(e)
+            await inter.send(embed=embed, ephemeral=True, delete_after=120)
+        else:
+            (embed, file) = mu.build_game_message(gamedoc)
+            await inter.send(embed = embed, file=file)
+    
     @commands.slash_command(dm_permission=False)
     async def surrender(
         inter: disnake.ApplicationCommandInteraction,
@@ -119,7 +143,7 @@ class public_cog(commands.Cog):
         name: The name of the in-progress game you're surrendering
         '''
         channel = inter.channel_id
-        user = inter.author.id
+        user = str(inter.author.id)
 
         try:
             mg.surrender(name, channel, user)

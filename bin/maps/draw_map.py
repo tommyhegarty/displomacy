@@ -100,5 +100,5 @@ def draw_private_map_from_state(game_doc, player):
     draw=ImageDraw.Draw(map_basic,'RGBA')
     draw=draw_supply(draw, game_doc)
     draw=draw_units(draw, game_doc)
-    draw=draw_orders(draw, game_doc, game_doc['currently_playing'][player])
+    #draw=draw_orders(draw, game_doc, game_doc['currently_playing'][player])
     return map_basic

@@ -28,7 +28,7 @@ class orders_cog(commands.Cog):
         '''
 
         channel = inter.channel_id
-        user = inter.author.id
+        user = str(inter.author.id)
 
         try:
             gamedoc = mo.submit_order(name, channel, user, 'MOVE', unit_location, move_to, 'NAN', unit)
@@ -60,7 +60,7 @@ class orders_cog(commands.Cog):
         supporting_from: Where (3 letter location) the supported unit is currently located.
         '''
         channel = inter.channel_id
-        user = inter.author.id
+        user = str(inter.author.id)
 
         try:
             gamedoc = mo.submit_order(name, channel, user, 'SUPPORT', unit_location, supporting_to, supporting_from, unit)
@@ -88,7 +88,7 @@ class orders_cog(commands.Cog):
         unit_location: Where (3 letter location) the unit is located.
         '''
         channel = inter.channel_id
-        user = inter.author.id
+        user = str(inter.author.id)
 
         try:
             gamedoc = mo.submit_order(name, channel, user, 'HOLD', unit_location, unit_location, 'NAN', unit)
@@ -119,7 +119,7 @@ class orders_cog(commands.Cog):
         '''
 
         channel = inter.channel_id
-        user = inter.author.id
+        user = str(inter.author.id)
 
         try:
             gamedoc = mo.submit_order(name, channel, user, 'CONVOY', fleet_location, convoy_to, convoy_from, 'F')
@@ -136,7 +136,7 @@ class orders_cog(commands.Cog):
         name: str = commands.Param(autocomplete=auto.autocomp_ongoing_games)
     ):
         channel = inter.channel_id
-        user = inter.author.id
+        user = str(inter.author.id)
 
         try:
             gamedoc = mo.lock(name, channel, user)
@@ -153,7 +153,7 @@ class orders_cog(commands.Cog):
         name: str = commands.Param(autocomplete=auto.autocomp_ongoing_games)
     ):
         channel = inter.channel_id
-        user = inter.author.id
+        user = str(inter.author.id)
 
         try:
             gamedoc = mo.unlock(name, channel, user)
@@ -172,7 +172,7 @@ class orders_cog(commands.Cog):
         from_location: str = commands.Param(autocomplete=auto.autocomp_retreat_locations),
         to_retreat: str = commands.Param(autocomplete=auto.autocomp_retreat_possibilities)
     ):
-        user = inter.author.id
+        user = str(inter.author.id)
 
         try:
             gamedoc = mo.retreat(name, channel, user, from_location, to_retreat)
@@ -197,7 +197,7 @@ class orders_cog(commands.Cog):
         else:
             remove = True
 
-        user = inter.author.id
+        user = str(inter.author.id)
 
         try:
             gamedoc = mo.supply(name, channel, user, location, remove, unit)

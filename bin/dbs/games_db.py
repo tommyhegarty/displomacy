@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from pymongo import MongoClient, collection
 import os
 
 connection_string = os.environ['dbstring']
@@ -22,7 +22,7 @@ def update_game(gamedoc):
 
     try:
         games = MongoClient(connection_string)['discplomacy']['games']
-        result = games.find_one_and_replace({'_id': {'name': gamedoc['_id']['name'], 'channel': gamedoc['_id']['channel']}}, gamedoc)
+        result = games.find_one_and_replace({'_id': {'name': gamedoc['_id']['name'], 'channel': gamedoc['_id']['channel']}}, gamedoc, return_document=collection.ReturnDocument.AFTER)
     except Exception as e:
         raise e
     else:

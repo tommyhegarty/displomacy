@@ -1,18 +1,14 @@
-import json
-import os
-import glob
-import random
-import datetime
+import json, os, glob, datetime, random, pprint
 from dbs import games_db as gdb
 from logic import game_vars as gv
 
 def get_all_waiting_games(channel):
-    gamedocs = gdb.search_games({'channel': channel, 'started': True})
-    return [g['name'] for g in gamedocs if not gamedocs['started']]
+    gamedocs = gdb.search_games({'channel': channel, 'started': False})
+    return [g['name'] for g in gamedocs]
 
 def get_all_started_games(channel):
     gamedocs = gdb.search_games({'channel': channel, 'started': True})
-    return [g['name'] for g in gamedocs if gamedocs['started']]
+    return [g['name'] for g in gamedocs]
 
 def get_ongoing_game(name, channel):
     try:
@@ -40,9 +36,6 @@ def get_game(name, channel):
     return gdb.get_game(name, channel)
 
 def new_game(name, player, duration, channel):
-
-    if not name.isalnum():
-        raise Exception("Invalid characters used in game name. Only alphanumeric characters allowed, with no spaces!")
     
     if get_game(name, channel) != None:
         raise Exception("A game of this name already exists in this channel.")
@@ -64,14 +57,17 @@ def new_game(name, player, duration, channel):
     else:
         raise Exception('Something other than the game state was added to the db! What a horrible tragedy.')
 
-def start_game(name, channel):
+def start_game(name, channel, user):
 
     gamedoc = get_waiting_game(name, channel)
     duration = gamedoc['turn_duration']
     players = gamedoc['players']
 
-    if len(players) != 7:
-        raise Exception("There aren't 7 players in the game. Diplomacy requires exactly 7 players!")
+    if user not in players:
+        raise Exception("You can't start a game you're not a player in! If the game isn't full already, try `/join`ing it.")
+
+#    if len(players) != 7:
+#        raise Exception("There aren't 7 players in the game. Diplomacy requires exactly 7 players!")
 
     current = datetime.datetime.now()
     if duration == '1 hour':
@@ -89,7 +85,7 @@ def start_game(name, channel):
             break
     
     gamedoc['currently_playing'] = playing.copy()
-    gamedoc['next_turn'] = next_turn
+    gamedoc['next_turn'] = next_turn.isoformat()
     gamedoc['started'] = True
     
     result = gdb.update_game(gamedoc)
