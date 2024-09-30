@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack for compute resources that run Displomacy bot.
+
+Resources:
+  DisplomacyBotHome:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName: bot-keypair
+      ImageId: ami-0ebfd941bbafe70c6
+      SecurityGroupIds:
+        - !GetAtt SshSecurityGroup.GroupId
+      IamInstanceProfile:
+        !Ref DisplomacyBotHomeInstanceProfile
+      Tags:
+        - Key: project
+          Value: displomacy
+        - Key: Name
+          Value: displomacy-bot
+
+  SshSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: 'displomacy-ssh-group'
+      GroupDescription: 'Security group for SSH ingress and egress.'
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: TCP
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: -1
+      VpcId: vpc-4a6c0c30
+      Tags:
+        - Key: project
+          Value: displomacy
+  
+  DisplomacyBotHomeInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: 'displomacy-bot-profile'
+      Roles:
+        - !Ref DisplomacyBotRole
+
+  DisplomacyBotRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: 'displomacy-bot'
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+  
+  DisplomacyBotRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: 'displomacy-bot-all-policies'
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - "ssm:Get*"
+            Resource:
+              - "arn:aws:ssm:*:*:parameter/displomacy*"
+          - Effect: "Allow"
+            Action:
+              - "dynamodb:*"
+            Resource:
+              - "arn:aws:dynamodb:*:*:table/displomacy*"
+          - Effect: "Allow"
+            Action:
+              - "s3:*"
+            Resource:
+              - "arn:aws:s3:::displomacy*"
+      Roles: 
+        - !Ref DisplomacyBotRole

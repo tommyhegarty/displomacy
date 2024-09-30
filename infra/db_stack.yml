@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack for compute resources that run the bot.
+
+Resources:
+  UserTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: 'displomacy-users'
+      AttributeDefinitions:
+        - AttributeName: 'discord'
+          AttributeType: S
+      KeySchema:
+        - AttributeName: 'discord'
+          KeyType: 'HASH'
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+      Tags:
+        - Key: project
+          Value: displomacy 
+
+  GameTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: 'displomacy-games'
+      AttributeDefinitions:
+        - AttributeName: 'name'
+          AttributeType: S
+      KeySchema:
+        - AttributeName: 'name'
+          KeyType: 'HASH'
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+      Tags:
+        - Key: project
+          Value: displomacy 
+  
+  OrderTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: 'displomacy-orders'
+      AttributeDefinitions:
+        - AttributeName: 'game'
+          AttributeType: S
+        - AttributeName: 'player'
+          AttributeType: S
+      KeySchema:
+        - AttributeName: 'game'
+          KeyType: 'HASH'
+        - AttributeName: 'player'
+          KeyType: 'RANGE'
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+      Tags:
+        - Key: project
+          Value: displomacy
+
+  StateBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: 'displomacy-states-com'

@@ -1,0 +1,9 @@
+{
+    "name":"",
+    "channel":"",
+    "players":[],
+    "in_progress":false,
+    "state_bucket":"",
+    "locked_orders":0,
+    "resolving":false
+}
