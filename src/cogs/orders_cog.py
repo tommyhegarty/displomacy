@@ -28,14 +28,7 @@ class orders_cog(commands.Cog):
         channel = inter.channel_id
         user = str(inter.author.id)
 
-        try:
-            gamedoc = mo.submit_order(name, channel, user, 'MOVE', unit_location, move_to, 'NAN', unit)
-        except Exception as e:
-            embed = mu.build_error_message(e)
-            await inter.send(embed=embed, ephemeral=True, delete_after=120)
-        else:
-            (embed, file) = mu.build_game_message(gamedoc, user)
-            await inter.send(embed=embed, file=file, ephemeral=True)
+        print(f'move order submitted for {user} in {channel}')
 
     @commands.slash_command(dm_permission=False)
     async def support(
@@ -60,14 +53,7 @@ class orders_cog(commands.Cog):
         channel = inter.channel_id
         user = str(inter.author.id)
 
-        try:
-            gamedoc = mo.submit_order(name, channel, user, 'SUPPORT', unit_location, supporting_to, supporting_from, unit)
-        except Exception as e:
-            embed = mu.build_error_message(e)
-            await inter.send(embed=embed, ephemeral=True, delete_after=120)
-        else:
-            (embed, file) = mu.build_game_message(gamedoc, user)
-            await inter.send(embed=embed, file=file, ephemeral=True)
+        print(f'support order submitted for {user} in {channel}')
 
     @commands.slash_command(dm_permission=False)
     async def hold(
@@ -88,14 +74,7 @@ class orders_cog(commands.Cog):
         channel = inter.channel_id
         user = str(inter.author.id)
 
-        try:
-            gamedoc = mo.submit_order(name, channel, user, 'HOLD', unit_location, unit_location, 'NAN', unit)
-        except Exception as e:
-            embed = mu.build_error_message(e)
-            await inter.send(embed=embed, ephemeral=True, delete_after=120)
-        else:
-            (embed, file) = mu.build_game_message(gamedoc, user)
-            await inter.send(embed=embed, file=file, ephemeral=True)
+        print(f'hold order submitted for {user} in {channel}')
 
     @commands.slash_command(dm_permission=False)
     async def convoy(
@@ -119,14 +98,7 @@ class orders_cog(commands.Cog):
         channel = inter.channel_id
         user = str(inter.author.id)
 
-        try:
-            gamedoc = mo.submit_order(name, channel, user, 'CONVOY', fleet_location, convoy_to, convoy_from, 'F')
-        except Exception as e:
-            embed = mu.build_error_message(e)
-            await inter.send(embed=embed, ephemeral=True, delete_after=120)
-        else:
-            (embed, file) = mu.build_game_message(gamedoc, user)
-            await inter.send(embed=embed, file=file, ephemeral=True)
+        print(f'convoy order submitted for {user} in {channel}')
 
     @commands.slash_command(dm_permission=False)
     async def lock(
@@ -136,14 +108,7 @@ class orders_cog(commands.Cog):
         channel = inter.channel_id
         user = str(inter.author.id)
 
-        try:
-            gamedoc = mo.lock(name, channel, user)
-        except Exception as e:
-            embed = mu.build_error_message(e)
-            await inter.send(embed=embed, ephemeral=True, delete_after=120)
-        else:
-            (embed, file) = mu.build_game_message(gamedoc, user)
-            await inter.send(embed=embed, file=file, ephemeral=True)
+        print(f'lock submitted for {user} in {channel}')
 
     @commands.slash_command(dm_permission=False)
     async def unlock(
@@ -153,14 +118,7 @@ class orders_cog(commands.Cog):
         channel = inter.channel_id
         user = str(inter.author.id)
 
-        try:
-            gamedoc = mo.unlock(name, channel, user)
-        except Exception as e:
-            embed = mu.build_error_message(e)
-            await inter.send(embed=embed, ephemeral=True, delete_after=120)
-        else:
-            (embed, file) = mu.build_game_message(gamedoc, user)
-            await inter.send(embed=embed, file=file, ephemeral=True)
+        print(f'unlock submitted for {user} in {channel}')
     
     @commands.slash_command(dm_permission=False)
     async def retreat(
@@ -172,14 +130,7 @@ class orders_cog(commands.Cog):
         user = str(inter.author.id)
         channel = inter.channel_id
 
-        try:
-            gamedoc = mo.retreat(name, channel, user, from_location, to_retreat)
-        except Exception as e:
-            embed = mu.build_error_message(e)
-            await inter.send(embed=embed, ephemeral=True, delete_after=120)
-        else:
-            (embed, file) = mu.build_game_message(gamedoc, user)
-            await inter.send(embed=embed, file=file, ephemeral=True)
+        print(f'retreat submitted for {user} in {channel}')
     
     @commands.slash_command(dm_permission=False)
     async def supply(
@@ -197,11 +148,4 @@ class orders_cog(commands.Cog):
         user = str(inter.author.id)
         channel = inter.channel_id
 
-        try:
-            gamedoc = mo.supply(name, channel, user, location, remove, unit)
-        except Exception as e:
-            embed = mu.build_error_message(e)
-            await inter.send(embed=embed, ephemeral=True, delete_after=120)
-        else:
-            (embed, file) = mu.build_game_message(gamedoc, user)
-            await inter.send(embed=embed, file=file, ephemeral=True)
+        print(f'supply submitted for {user} in {channel}')
