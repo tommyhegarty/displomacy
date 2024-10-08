@@ -1,8 +1,6 @@
 import disnake
 from disnake.ext import commands
-from games import manage_orders as mo
 from logic import autocompleters as auto
-from . import message_util as mu
 
 class orders_cog(commands.Cog):
     

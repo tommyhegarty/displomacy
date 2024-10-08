@@ -3,9 +3,8 @@
 import cfg, disnake, asyncio
 from disnake.ext import commands, tasks
 
-import runner
 from cogs import message_util as mu
-from cogs.game_cog import public_cog
+from cogs.games_cog import games_cog
 from cogs.orders_cog import orders_cog
 
 TOKEN=cfg.token
@@ -53,6 +52,6 @@ async def notify_next_turn(gamedoc):
     await channel.send(embed=embed, file=image)
 
 
-bot.add_cog(public_cog(bot))
+bot.add_cog(games_cog(bot))
 bot.add_cog(orders_cog(bot))
 bot.run(TOKEN)

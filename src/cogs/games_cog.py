@@ -3,7 +3,7 @@ from disnake.ext import commands
 from dbs import game as g, player as p
 from . import responses as r
 
-class public_cog(commands.Cog):
+class games_cog(commands.Cog):
 
     @commands.slash_command(dm_permission=False)
     async def new(
