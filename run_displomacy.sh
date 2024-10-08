@@ -74,7 +74,7 @@ restart_all() {
 }
 
 case "$1" in
-    "bot")
+    "--bot")
         if [[ "$2" == "start" ]]; then
             start_bot
         elif [[ "$2" == "stop" ]]; then
@@ -83,7 +83,7 @@ case "$1" in
             echo "Usage: $0 {bot-start|bot-stop|resp-start|resp-stop|restart}"
         fi
         ;;
-    "resp")
+    "--resp")
         if [[ "$2" == "start" ]]; then
             start_resp
         elif [[ "$2" == "stop" ]]; then
@@ -92,9 +92,9 @@ case "$1" in
             echo "Usage: $0 {--bot start/stop | --resp start/stop | --restart}"
         fi
         ;;
-    "restart")
+    "--restart")
         restart_all
         ;;
     *)
-        echo "Usage: $0 {bot-start|bot-stop|resp-start|resp-stop|restart}"
+        echo "Usage: $0 {--bot start/stop | --resp start/stop | --restart}"
 esac
