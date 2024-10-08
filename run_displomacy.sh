@@ -14,7 +14,7 @@ BOT_PID="${PID_DIR}/displomacy.pid"
 RESP_PID="${PID_DIR}/responder.pid"
 
 echo "installing the requirements file"
-pip install -r src/requirements.txt
+pip install -q -r src/requirements.txt
 
 start_bot() {
 
@@ -74,19 +74,25 @@ restart_all() {
 }
 
 case "$1" in
-    bot-start)
-        start_bot
+    "bot")
+        if [[ "$2" == "start" ]]; then
+            start_bot
+        elif [[ "$2" == "stop" ]]; then
+            stop_bot
+        else
+            echo "Usage: $0 {bot-start|bot-stop|resp-start|resp-stop|restart}"
+        fi
         ;;
-    bot-stop)
-        stop_bot
+    "resp")
+        if [[ "$2" == "start" ]]; then
+            start_resp
+        elif [[ "$2" == "stop" ]]; then
+            stop_resp
+        else
+            echo "Usage: $0 {--bot start/stop | --resp start/stop | --restart}"
+        fi
         ;;
-    resp-start)
-        start_resp
-        ;;
-    resp-stop)
-        stop_resp
-        ;;
-    restart)
+    "restart")
         restart_all
         ;;
     *)
