@@ -36,12 +36,8 @@ def __new_game(channel, player, turn_length):
         Item={
             'channel':channel,
             'all_players':[player],
-            'active_players':[],
             'started':False,
-            'locked':[],
-            'turn_length':turn_length,
-            'next_turn':'',
-            'current_turn':'Spring 1900'
+            'turn_length':turn_length
         },
         ConditionExpression=con.Not(con.Attr('channel').exists())
     )
@@ -71,11 +67,8 @@ def __close_game(channel):
     )
 
 def create_new_game(channel, player, turn_length):
-    now=datetime.datetime.now()
-    delta=time_map[turn_length]
-    next_turn=now+delta
     try:
-        __new_game(channel,player,turn_length,next_turn)
+        __new_game(channel,player,turn_length)
     except ClientError as err:
         print(f'failed to create new game in game {channel} with player {player} because one already exists: {err}')
         raise KeyError
