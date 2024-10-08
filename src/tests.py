@@ -1,47 +1,43 @@
-import os, cfg, datetime
+import os
+os.environ["TOKEN"]="meaninglesstesttoken"
+import dbs.player as p, dbs.order as o, cfg
+import boto3, boto3.dynamodb.conditions as con
 
-os.environ['dbstring'] = cfg.dbstring
+def test_player():
 
-from dbs import games_db as gdb
-from logic import game_vars as gv
-from games import manage_games as mg
+    p.player_join_game('testid','testchannel')
+    p.player_join_game('testid','testchannel2')
+    p.player_join_game('testid','testchannel3')
+    print(p.get_player_games('testid'))
 
-def test_dbs():
-    template = gv.template
-    result = gdb.add_game(template)
-    print(result)
+    p.player_finish_game('testid','testchannel2')
+    print(p.get_player_games('testid'))
 
-    current = datetime.datetime.now()
-    next_turn = current - datetime.timedelta(seconds=3600)
-    template['next_turn']=next_turn
-    template['players']=['a','b','c','d','e']
-    result = gdb.update_game(template)
-    print(result)
-    
-    result = gdb.search_games({'players': 'd'})
-    print(result)
+def test_failed_update():
 
-    result = gdb.get_game('sample','')
-    print(result)
+    ddb = boto3.resource('dynamodb').Table(cfg.player_table)
+    ddb.update_item(
+        Key={'id':'thisoneisntthere'},
+        ExpressionAttributeNames={'#ag':'active_games'},
+        ExpressionAttributeValues={':a':['fakegame']},
+        UpdateExpression='SET #ag = list_append(#ag, :a)'
+    )
 
-    result = gdb.delete_game('sample','')
-    print(result)
+def test_order():
 
-def test_game_manager():
-    result = mg.new_game('funnyname','a','20 mins','channeltest')
-    print(result)
+    testorder1={'location':'a','b':'b'}
+    testorder2={'location':'b','c':'c'}
+    testorder3={'location':'a','d':'d'}
 
-    result = mg.get_game('funnyname','channeltest')
-    print(result)
+    o.submit_order('testplayer','testgame',testorder1)
+    o.submit_order('testplayer','testgame',testorder2)
+    print(o.get_all_player_orders('testplayer','testgame'))
 
-    result = mg.leave_game('funnyname', 'channeltest', 'a')
-    print(result)
+    o.submit_order('testplayer1','testgame',testorder1)
+    o.submit_order('testplayer','testgame',testorder3)
+    print(o.get_all_player_orders('testplayer','testgame'))
+    print(o.get_all_game_orders('testgame'))
 
-def test_ready_games():
-    now = datetime.datetime.now()
-    result = gdb.search_games({"next_turn": {"$lt": now}})
-    print(result)
-
-test_ready_games()
-#test_dbs()
-#test_game_manager()
+#test_player()
+#test_failed_update()
+test_order()

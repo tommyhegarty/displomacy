@@ -1,6 +1,6 @@
 {
     "channel":"",
     "player":"",
-    "orders":[],
+    "orders":{},
     "locked":false
 }

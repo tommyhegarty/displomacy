@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack for event resources that communicate with the bot.
+
+Resources:
+  BotEventQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: 'displomacy-bot-event-queue'
+      Tags:
+        - Key: project
+          Value: displomacy
+
+  BotResponseQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: 'displomacy-bot-response-queue'
+      Tags:
+        - Key: project
+          Value: displomacy

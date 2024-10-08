@@ -9,7 +9,7 @@ Resources:
       KeyName: bot-keypair
       ImageId: ami-0ebfd941bbafe70c6
       SecurityGroupIds:
-        - !GetAtt SshSecurityGroup.GroupId
+        - !GetAtt DisplomacySshSecurityGroup.GroupId
       IamInstanceProfile:
         !Ref DisplomacyBotHomeInstanceProfile
       Tags:
@@ -18,7 +18,7 @@ Resources:
         - Key: Name
           Value: displomacy-bot
 
-  SshSecurityGroup:
+  DisplomacySshSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: 'displomacy-ssh-group'
@@ -31,7 +31,7 @@ Resources:
       SecurityGroupEgress:
         - CidrIp: "0.0.0.0/0"
           IpProtocol: -1
-      VpcId: vpc-4a6c0c30
+      VpcId: vpc-0645634e2be8d34df
       Tags:
         - Key: project
           Value: displomacy

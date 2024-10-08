@@ -6,7 +6,7 @@ from disnake.ext import commands, tasks
 import runner
 from cogs import message_util as mu
 from games import manage_games as mg
-from cogs.public_cog import public_cog
+from cogs.game_cog import public_cog
 from cogs.orders_cog import orders_cog
 
 TOKEN=cfg.token
