@@ -24,15 +24,18 @@ class games_cog(commands.Cog):
             g.create_new_game(channel, user, duration)
         except KeyError:
             await r.respond_privately(inter,f'Could not create a new game -- one already exists in this channel! Try to /join it instead.')
+            return
         except Exception as err:
             await r.respond_privately(inter,f'Failed to create a new game with unrecognized exception: {type(err)}.')
+            return
         else:
             try:
                 p.player_join_game(user, channel)
             except Exception as err:
                 g.leave_unstarted_game(channel,user)
                 await r.respond_privately(inter,f'There was a problem registering the new game to your player profile: {type(err)}')
-
+                return
+        
         await r.respond(inter,f'@{user} created a new game in the channel: [#{channel}]. Join this game by typing /join; once 6 more players join, the game will begin!')
 
     @commands.slash_command(dm_permission=False)
@@ -52,8 +55,10 @@ class games_cog(commands.Cog):
             return
         except ValueError as err:
             await r.respond_privately(err)
+            return
         except Exception as err:
             await r.respond_privately(inter,f'Failed to join the game with unknown error: {type(err)}')
+            return
         else:
             try:
                 p.player_join_game(user, channel)
