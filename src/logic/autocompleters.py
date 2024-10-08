@@ -1,5 +1,3 @@
-from games import manage_games as mg
-from dbs import games_db as gdb
 from . import game_vars as gv
 import disnake
 
