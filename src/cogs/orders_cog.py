@@ -112,8 +112,8 @@ class orders_cog(commands.Cog):
     @commands.slash_command(dm_permission=False)
     async def retreat(
         inter: disnake.ApplicationCommandInteraction,
-        from_location: str = commands.Param(autocomplete=auto.autocomp_retreat_locations),
-        to_retreat: str = commands.Param(autocomplete=auto.autocomp_retreat_possibilities)
+        from_location: str = commands.Param(),
+        to_retreat: str = commands.Param()
     ):
         user = str(inter.author.id)
         channel = inter.channel_id
@@ -124,7 +124,7 @@ class orders_cog(commands.Cog):
     async def supply(
         inter: disnake.ApplicationCommandInteraction,
         add_or_remove: str = commands.Param(choices=['ADD','REMOVE']),
-        location: str = commands.Param(autocomplete=auto.autocomp_control_locations),
+        location: str = commands.Param(),
         unit: str = commands.Param(choices=['A','F'])
     ):
         if add_or_remove == 'ADD':
