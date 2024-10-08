@@ -23,17 +23,17 @@ class games_cog(commands.Cog):
         try:
             g.create_new_game(channel, user, duration)
         except KeyError:
-            r.respond_privately(inter,f'Could not create a new game -- one already exists in this channel! Try to /join it instead.')
+            await r.respond_privately(inter,f'Could not create a new game -- one already exists in this channel! Try to /join it instead.')
         except Exception as err:
-            r.respond_privately(inter,f'Failed to create a new game with unrecognized exception: {type(err)}.')
+            await r.respond_privately(inter,f'Failed to create a new game with unrecognized exception: {type(err)}.')
         else:
             try:
                 p.player_join_game(user, channel)
             except Exception as err:
                 g.leave_unstarted_game(channel,user)
-                r.respond_privately(inter,f'There was a problem registering the new game to your player profile: {type(err)}')
+                await r.respond_privately(inter,f'There was a problem registering the new game to your player profile: {type(err)}')
 
-        r.respond(inter,f'@{user} created a new game in the channel: [#{channel}]. Join this game by typing /join; once 6 more players join, the game will begin!')
+        await r.respond(inter,f'@{user} created a new game in the channel: [#{channel}]. Join this game by typing /join; once 6 more players join, the game will begin!')
 
     @commands.slash_command(dm_permission=False)
     async def join(
@@ -48,27 +48,27 @@ class games_cog(commands.Cog):
         try:
             total_players=g.join_existing_game(channel, user)
         except KeyError:
-            r.respond_privately(inter,f'There is no game in this channel. Try /new instead!')
+            await r.respond_privately(inter,f'There is no game in this channel. Try /new instead!')
             return
         except ValueError as err:
-            r.respond_privately(err)
+            await r.respond_privately(err)
         except Exception as err:
-            r.respond_privately(inter,f'Failed to join the game with unknown error: {type(err)}')
+            await r.respond_privately(inter,f'Failed to join the game with unknown error: {type(err)}')
         else:
             try:
                 p.player_join_game(user, channel)
             except Exception as err:
                 g.leave_unstarted_game(channel,user)
-                r.respond_privately(inter,f'')
+                await r.respond_privately(inter,f'')
 
         if len(total_players) < 7:
             stringified=[]
             for i in total_players:
                 stringified.append(f'@{i}')
-            r.respond(inter, f'@{user} has joined the game in: [#{channel}]. The players now are: {stringified}')
+            await r.respond(inter, f'@{user} has joined the game in: [#{channel}]. The players now are: {stringified}')
         else:
             # start the game here
-            r.respond(inter, f'@{user} has joined the game -- there are enough players to begin the game!')
+            await r.respond(inter, f'@{user} has joined the game -- there are enough players to begin the game!')
     
     @commands.slash_command(dm_permission=False)
     async def leave(
