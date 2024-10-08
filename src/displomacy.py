@@ -14,6 +14,9 @@ intents.presences = False
 
 bot=commands.InteractionBot(test_guilds=[644627772265857077],intents=intents)
 
+import os
+os.environ['AWS_DEFAULT_REGION']='us-east-1'
+
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
