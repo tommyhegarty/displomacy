@@ -2,9 +2,6 @@
 
 # file to run the displomacy bot + game runner code
 
-TOKEN=$(aws ssm get-parameter --name "/displomacy/token" | jq --raw-output '.Parameter.Value')
-export TOKEN
-
 SRC_DIR="/home/ec2-user/displomacy/src"
 BOT_PATH="${SRC_DIR}/displomacy.py"
 RESP_PATH="${SRC_DIR}/responder.py"
@@ -12,10 +9,13 @@ RESP_PATH="${SRC_DIR}/responder.py"
 BOT_PID="${SRC_DIR}/displomacy.pid"
 RESP_PID="${SRC_DIR}/responder.pid"
 
-echo "installing the requirements file"
-pip install -q -r src/requirements.txt
-
 start_bot() {
+
+    TOKEN=$(aws ssm get-parameter --name "/displomacy/token" | jq --raw-output '.Parameter.Value')
+    export TOKEN
+
+    echo "installing the requirements file"
+    pip install -q -r src/requirements.txt
 
     if [[ -f "${BOT_PID}" ]]; then
         echo "The bot is already running..."
@@ -79,7 +79,7 @@ case "$1" in
         elif [[ "$2" == "stop" ]]; then
             stop_bot
         else
-            echo "Usage: $0 {bot-start|bot-stop|resp-start|resp-stop|restart}"
+            echo "Usage: $0 {--bot start/stop | --resp start/stop | --restart}"
         fi
         ;;
     "--resp")
