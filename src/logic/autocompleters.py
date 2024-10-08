@@ -1,6 +1,13 @@
 from . import game_vars as gv
 import disnake
 
+# autocomplete for all possible locations
+async def autocomp_unit_locations(inter: disnake.ApplicationCommandInteraction, user_input: str):
+    try:
+        return gv.game_map['LAND']+gv.game_map['SEA']
+    except:
+        return []
+
 # autocomplete for movement
 async def autocomp_unit_adjacent(inter: disnake.ApplicationCommandInteraction, user_input: str):
     try:
