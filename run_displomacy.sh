@@ -9,9 +9,8 @@ SRC_DIR="/home/ec2-user/displomacy/src"
 BOT_PATH="${SRC_DIR}/displomacy.py"
 RESP_PATH="${SRC_DIR}/responder.py"
 
-PID_DIR="/var/run"
-BOT_PID="${PID_DIR}/displomacy.pid"
-RESP_PID="${PID_DIR}/responder.pid"
+BOT_PID="${SRC_DIR}/displomacy.pid"
+RESP_PID="${SRC_DIR}/responder.pid"
 
 echo "installing the requirements file"
 pip install -q -r src/requirements.txt
@@ -21,7 +20,7 @@ start_bot() {
     if [[ -f "${BOT_PID}" ]]; then
         echo "The bot is already running..."
     else
-        nohup python "${BOT_PATH}" &> /dev/null &
+        nohup python -u "${BOT_PATH}" > bot.log &
         echo $! > "${BOT_PID}"
         echo "Displomacy Bot has started."
     fi
@@ -45,7 +44,7 @@ start_resp() {
     if [[ -f "${RESP_PID}" ]]; then
         echo "The responder is already running..."
     else
-        nohup python "${RESP_PATH}" &> /dev/null &
+        nohup python -u "${RESP_PATH}" > resp.log &
         echo $! > "${RESP_PID}"
         echo "Displomacy responder has started."
     fi
