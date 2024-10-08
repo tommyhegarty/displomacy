@@ -24,7 +24,7 @@ time_map={
 def __get_game(channel):
     ddb=boto3.resource('dynamodb').Table(cfg.game_table)
     item=ddb.get_item(
-        Key={'channel':str(channel)}
+        Key={'channel':channel}
     ).get('Item','')
     if item == '':
         raise KeyError

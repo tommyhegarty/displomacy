@@ -17,7 +17,7 @@ class games_cog(commands.Cog):
         ----------
         duration: The duration of the game's turns. Options are 20 minutes, 1 hour, and 1 day.
         '''
-        channel = inter.channel_id
+        channel = str(inter.channel_id)
         user = str(inter.author.id)
         
         try:
@@ -45,7 +45,7 @@ class games_cog(commands.Cog):
         '''
         Join a game in this channel to play Diplomacy!
         '''
-        channel = inter.channel_id
+        channel = str(inter.channel_id)
         user = str(inter.author.id)
 
         try:
@@ -82,7 +82,7 @@ class games_cog(commands.Cog):
         '''
         Leave a game you're currently in before the game starts.
         '''
-        channel = inter.channel_id
+        channel = str(inter.channel_id)
         user = str(inter.author.id)
         
         print(f'leave submitted for {user} in {channel}')
@@ -98,7 +98,7 @@ class games_cog(commands.Cog):
         ----------
         name: The name of the in-progress game you're surrendering
         '''
-        channel = inter.channel_id
+        channel = str(inter.channel_id)
         user = str(inter.author.id)
 
         print(f'surrender submitted for {user} in {channel}')
