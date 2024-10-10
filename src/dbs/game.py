@@ -109,9 +109,11 @@ def leave_unstarted_game(channel, player):
         if all_players == [player]:
             print(f'Player {player} is the last player left in the lobby; closing the game {channel}.')
             __close_game(channel)
+            return []
         else:
             print(f'Removing player {player} from waiting list of players for game {channel}.')
             __set_player_list(channel, all_players.remove(player))
+            return all_players.remove(player)
     except KeyError:
         print(f'Game {channel} does not exist.')
         raise KeyError(f'Game {channel} does not exist.')

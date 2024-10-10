@@ -85,7 +85,20 @@ class games_cog(commands.Cog):
         channel = str(inter.channel_id)
         user = str(inter.author.id)
         
-        print(f'leave submitted for {user} in {channel}')
+        try:
+            players_left=g.leave_unstarted_game(channel, user)
+        except ValueError as err:
+            await r.respond_privately(inter, err)
+        except KeyError as err:
+            await r.respond_privately(inter, f'There is no game in this channel! Use /new to create one.')
+        except Exception as err:
+            await r.respond_privately(inter, f'There has been an unknown error trying to leave the game: {type(err)}')
+        else:
+            if players_left == []:
+                await r.respond(f'The last player, @{user}, has left the lobby. The game has now closed. Use /new to create a new game in this channel.')
+            else:
+                await r.respond(f'Player @{user} has left the game. There are now {len(players_left)} players waiting to start.')
+        
     
     @commands.slash_command(dm_permission=False)
     async def surrender(
