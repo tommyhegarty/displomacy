@@ -95,9 +95,9 @@ class games_cog(commands.Cog):
             await r.respond_privately(inter, f'There has been an unknown error trying to leave the game: {type(err)}')
         else:
             if players_left == []:
-                await r.respond(f'The last player, @{user}, has left the lobby. The game has now closed. Use /new to create a new game in this channel.')
+                await r.respond(inter, f'The last player, @{user}, has left the lobby. The game has now closed. Use /new to create a new game in this channel.')
             else:
-                await r.respond(f'Player @{user} has left the game. There are now {len(players_left)} players waiting to start.')
+                await r.respond(inter, f'Player @{user} has left the game. There are now {len(players_left)} players waiting to start.')
         
     
     @commands.slash_command(dm_permission=False)
