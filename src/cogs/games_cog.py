@@ -70,10 +70,10 @@ class games_cog(commands.Cog):
             stringified=[]
             for i in total_players:
                 stringified.append(f'@{i}')
-            await r.respond(inter, f'@{user} has joined the game in: [#{channel}]. The players now are: {stringified}')
+            await r.respond(inter, f'<@{user}> has joined the game in: [<#{channel}>]. The players now are: {stringified}')
         else:
             # start the game here
-            await r.respond(inter, f'@{user} has joined the game -- there are enough players to begin the game!')
+            await r.respond(inter, f'<@{user}> has joined the game -- there are enough players to begin the game!')
     
     @commands.slash_command(dm_permission=False)
     async def leave(
@@ -95,9 +95,9 @@ class games_cog(commands.Cog):
             await r.respond_privately(inter, f'There has been an unknown error trying to leave the game: {type(err)}')
         else:
             if players_left == []:
-                await r.respond(inter, f'The last player, @{user}, has left the lobby. The game has now closed. Use /new to create a new game in this channel.')
+                await r.respond(inter, f'The last player, <@{user}>, has left the lobby. The game has now closed. Use /new to create a new game in this channel.')
             else:
-                await r.respond(inter, f'Player @{user} has left the game. There are now {len(players_left)} players waiting to start.')
+                await r.respond(inter, f'Player <@{user}> has left the game. There are now {len(players_left)} players waiting to start.')
         
     
     @commands.slash_command(dm_permission=False)
